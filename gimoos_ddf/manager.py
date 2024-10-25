@@ -35,7 +35,7 @@ def main():
                     f.write('')
                 with open(os.path.join(work_path, 'driver.xml'), 'w') as f:
                     f.write('')
-                print(f'创建驱动 {name} 成功')
+                print(f'创建驱动文件 "{name}" 成功')
 
 
 if __name__ == '__main__':

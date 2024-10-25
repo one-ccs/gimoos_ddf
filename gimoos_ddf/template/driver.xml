@@ -1,0 +1,91 @@
+
+<devicedata>
+    <name>模板驱动</name>
+    <alias>驱动别名</alias>
+    <version>1</version>
+    <manufacturer>Gimoos</manufacturer>
+    <creator>Gimoos</creator>
+    <copyright></copyright>
+
+    <events></events>
+
+    <config>
+        <properties>
+            <property>
+                <name>驱动版本</name>
+                <type>STRING</type>
+                <default>1</default>
+                <readonly>true</readonly>
+            </property>
+            <property>
+                <name>日志级别</name>
+                <type>LIST</type>
+                <default>信息</default>
+                <readonly>false</readonly>
+                <items>
+                    <item>无</item>
+                    <item>信息</item>
+                    <item>调试</item>
+                    <item>错误</item>
+                </items>
+            </property>
+        </properties>
+
+        <actions>
+            <action>
+                <name>重新收集设备地址</name>
+                <command>ResetSlaveMap</command>
+            </action>
+            <action>
+                <name>打印地址映射表</name>
+                <command>PrintSlaveMap</command>
+            </action>
+        </actions>
+    </config>
+
+    <capabilities></capabilities>
+
+    <proxies>
+        <proxy proxybindingid="5001" name="模板驱动">driver_type</proxy>
+    </proxies>
+
+    <connections>
+        <!-- 内部改变状态通道 -->
+        <connection>
+            <id>5001</id>
+            <type>2</type>
+            <connectionname>模板驱动</connectionname>
+            <consumer>True</consumer>
+            <classes>
+                <class>
+                    <classname>DRIVER_TYPE</classname>
+                </class>
+            </classes>
+        </connection>
+
+        <!-- 外部数据通道（控制） -->
+        <connection>
+            <id>3001</id>
+            <connectionname>串口</connectionname>
+            <type>1</type>
+            <consumer>True</consumer>
+            <classes>
+                <class>
+                    <classname>serial port</classname>
+                </class>
+            </classes>
+        </connection>
+
+        <connection>
+            <id>4000</id>
+            <connectionname>模板驱动</connectionname>
+            <type>1</type>
+            <consumer>False</consumer>
+            <classes>
+                <class>
+                    <classname>TEMPLATE_DRIVER</classname>
+                </class>
+            </classes>
+        </connection>
+    </connections>
+</devicedata>

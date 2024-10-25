@@ -1,5 +1,5 @@
 __pycache__
-logs
-.vscode
-
-drivers
+build
+dist
+realse
+*.egg-info/
