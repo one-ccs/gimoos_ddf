@@ -4,6 +4,11 @@ import os
 import re
 import psycopg2
 import zipfile
+import requests
+import json
+import aiohttp
+import asyncio
+from requests_toolbelt import MultipartEncoder
 from datetime import datetime
 
 
@@ -44,6 +49,31 @@ def xml_to_dict(xml: str, default: any = ...) -> dict:
     return wrapper(fromstring(xml))
 
 
+def is_need_update(file_path: str) -> bool:
+    """检查文件是否需要更新"""
+    update_record_path = 'temp/update_record.json'
+    update_mtime = os.path.getmtime(os.path.join(module_dir, file_path))
+    update_record = {}
+
+    # 读取文件修改记录
+    if not os.path.exists(update_record_path):
+        with open(update_record_path, 'w', encoding='utf-8') as file:
+            file.write('{}')
+
+    with open(update_record_path, 'r', encoding='utf-8') as file:
+        update_record = json.load(file)
+
+    if mtime := update_record.get(file_path, None):
+        if mtime == update_mtime:
+            return False
+
+    update_record[file_path] = update_mtime
+    with open(update_record_path, 'w', encoding='utf-8') as file:
+        json.dump(update_record, file, indent=4, ensure_ascii=False)
+
+    return True
+
+
 def get_data() -> list[dict[str, str]]:
     # 用于保存提取的 XML 和 DEVICE_ID 内容
     extracted_data = []
@@ -51,6 +81,9 @@ def get_data() -> list[dict[str, str]]:
     # 遍历目录中的所有文件
     for filename in os.listdir(module_dir):
         if filename.endswith('.py') and filename != '__init__.py':
+            if not is_need_update(filename):
+                continue
+
             file_path = os.path.join(module_dir, filename)
 
             with open(file_path, 'r', encoding='utf-8') as file:
@@ -135,20 +168,73 @@ def update_with_sql(ip):
     conn.close()
 
 
-def update_with_fetch(ip, port=8000):
-    extracted_data = get_data()
+async def login(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json={
+            "project": "items",
+            "type": "im-function",
+            "id": "login",
+            "param": {
+                "data": {
+                    "username": "root",
+                    "password": "123456",
+                },
+            },
+        }) as response:
+            if response.status == 200:
+                token = (await response.json()).get('data', {}).get('token', None)
+                print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 登录成功，token：{token}')
+                return token
+            else:
+                print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 登录失败，状态码：{response.status_code}')
+                return None
 
-    for data in extracted_data:
+
+async def upload_files(url: str, token: str, data: dict):
+    async with aiohttp.ClientSession() as session:
         filename = data['filename']
-        xml = data['xml']
-        script = data['script']
+        driver_xml = data['driver_xml']
+        driver_lua = data['driver_lua']
+
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 开始上传 "{filename}.zip"')
 
         # 构建 zip 文件
         with zipfile.ZipFile(f'temp/{filename}.zip', 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            zip_file.writestr(f'driver.xml', xml)
-            zip_file.writestr(f'driver.py', script)
+            zip_file.writestr(f'driver.xml', driver_xml)
+            zip_file.writestr(f'driver.py', driver_lua)
 
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 压缩 "{filename}.zip" 完成')
+        # 上传 zip 文件
+        with open(f'temp/{filename}.zip', 'rb') as file:
+            data = aiohttp.FormData()
+            data.add_field('param', '{"project":"items","type":"im-function","id":"upload_driver","param":{}}')
+            data.add_field('file', file, filename=f'{filename}.zip', content_type='application/zip')
+
+            headers = {
+                'Authorization': f'Basic {token}',
+            }
+            async with session.post(url, data=data, headers=headers) as response:
+                if response.status != 200:
+                    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 上传 "{filename}.zip" 失败，状态码：{response.status}')
+
+
+async def update_with_fetch(ip, port=8000):
+    extracted_data = get_data()
+    if not extracted_data:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 没有需要更新的驱动程序')
+        return
+
+    if not os.path.exists('temp'):
+        os.mkdir('temp')
+
+    url = f'http://{ip}:{port}/interface/db/selector'
+
+    if not (token := await login(url)):
+        return
+
+    tasks = [asyncio.create_task(upload_files(url, token, data)) for data in extracted_data]
+
+    await asyncio.gather(*tasks)
+    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 全部上传完成')
 
 
 if __name__ == '__main__':
@@ -158,4 +244,5 @@ if __name__ == '__main__':
         case '-s':
             update_with_sql(sys.argv[2])
         case '-f':
-            update_with_fetch(sys.argv[2])
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(update_with_fetch(sys.argv[2]))
