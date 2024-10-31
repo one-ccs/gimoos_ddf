@@ -8,7 +8,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='gimoos_ddf',
-    version='0.1.2',
+    version='0.2.0',
     description='',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
@@ -31,7 +31,7 @@ setup(
     install_requires=[],
     entry_points={
         'console_scripts': [
-            'gimoos_ddf = gimoos_ddf.manager:main',
+            'gimoos_ddf = gimoos_ddf.core.management:execute_from_command_line',
         ],
     },
 )

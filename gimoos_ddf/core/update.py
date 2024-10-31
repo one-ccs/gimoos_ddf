@@ -61,7 +61,10 @@ def is_need_update(file_path: str) -> bool:
             file.write('{}')
 
     with open(update_record_path, 'r', encoding='utf-8') as file:
-        update_record = json.load(file)
+        try:
+            update_record = json.load(file)
+        except:
+            update_record = {}
 
     if mtime := update_record.get(file_path, None):
         if mtime == update_mtime:
@@ -169,25 +172,29 @@ def update_with_sql(ip):
 
 
 async def login(url):
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json={
-            "project": "items",
-            "type": "im-function",
-            "id": "login",
-            "param": {
-                "data": {
-                    "username": "root",
-                    "password": "123456",
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json={
+                "project": "items",
+                "type": "im-function",
+                "id": "login",
+                "param": {
+                    "data": {
+                        "username": "root",
+                        "password": "123456",
+                    },
                 },
-            },
-        }) as response:
-            if response.status == 200:
-                token = (await response.json()).get('data', {}).get('token', None)
-                print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 登录成功，token：{token}')
-                return token
-            else:
-                print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 登录失败，状态码：{response.status_code}')
-                return None
+            }) as response:
+                if response.status == 200:
+                    token = (await response.json()).get('data', {}).get('token', None)
+                    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 登录成功，token：{token}')
+                    return token
+                else:
+                    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 登录失败，状态码：{response.status_code}')
+                    return None
+    except aiohttp.ClientConnectionError:
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 连接失败')
+        return None
 
 
 async def upload_files(url: str, token: str, data: dict):
@@ -205,16 +212,16 @@ async def upload_files(url: str, token: str, data: dict):
 
         # 上传 zip 文件
         with open(f'temp/{filename}.zip', 'rb') as file:
-            data = aiohttp.FormData()
-            data.add_field('param', '{"project":"items","type":"im-function","id":"upload_driver","param":{}}')
-            data.add_field('file', file, filename=f'{filename}.zip', content_type='application/zip')
+            data = aiohttp.FormData(quote_fields=False, charset='utf-8')
+            data.add_field('param', '{"project":"items","type":"im-function","id":"upload_driver","param":{}}', content_type='application/json')
+            data.add_field('file', file, filename=f'{filename}.zip', content_type='application/x-zip-compressed')
 
             headers = {
                 'Authorization': f'Basic {token}',
             }
             async with session.post(url, data=data, headers=headers) as response:
-                if response.status != 200:
-                    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 上传 "{filename}.zip" 失败，状态码：{response.status}')
+                if response.status == 400:
+                    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 上传 "{filename}.zip" 失败，状态码：{response.status}, "{(await response.json()).get("message", "")}"')
 
 
 async def update_with_fetch(ip, port=8000):

@@ -1,5 +1,6 @@
-__pycache__
-build
-dist
-realse
+.vscode/
+__pycache__/
+build/
+dist/
+realse/
 *.egg-info/
