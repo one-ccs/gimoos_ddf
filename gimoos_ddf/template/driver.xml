@@ -1,10 +1,9 @@
-
 <devicedata>
-    <name>模板驱动</name>
-    <alias>驱动别名</alias>
+    <name>{name}</name>
+    <alias>{name}</alias>
     <version>1</version>
-    <manufacturer>Gimoos</manufacturer>
-    <creator>Gimoos</creator>
+    <manufacturer></manufacturer>
+    <creator></creator>
     <copyright></copyright>
 
     <events></events>
@@ -31,22 +30,13 @@
             </property>
         </properties>
 
-        <actions>
-            <action>
-                <name>重新收集设备地址</name>
-                <command>ResetSlaveMap</command>
-            </action>
-            <action>
-                <name>打印地址映射表</name>
-                <command>PrintSlaveMap</command>
-            </action>
-        </actions>
+        <actions></actions>
     </config>
 
     <capabilities></capabilities>
 
     <proxies>
-        <proxy proxybindingid="5001" name="模板驱动">driver_type</proxy>
+        <proxy proxybindingid="5001" name="{name}">{driver_type}</proxy>
     </proxies>
 
     <connections>
@@ -54,11 +44,11 @@
         <connection>
             <id>5001</id>
             <type>2</type>
-            <connectionname>模板驱动</connectionname>
+            <connectionname>{name}</connectionname>
             <consumer>True</consumer>
             <classes>
                 <class>
-                    <classname>DRIVER_TYPE</classname>
+                    <classname>{upper_driver_type}</classname>
                 </class>
             </classes>
         </connection>
@@ -72,18 +62,6 @@
             <classes>
                 <class>
                     <classname>serial port</classname>
-                </class>
-            </classes>
-        </connection>
-
-        <connection>
-            <id>4000</id>
-            <connectionname>模板驱动</connectionname>
-            <type>1</type>
-            <consumer>False</consumer>
-            <classes>
-                <class>
-                    <classname>TEMPLATE_DRIVER</classname>
                 </class>
             </classes>
         </connection>

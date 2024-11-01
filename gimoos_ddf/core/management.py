@@ -31,16 +31,24 @@ def execute_from_command_line():
 
             for name in args.name:
                 path = os.path.join(args.path, name)
+                encoding = 'utf-8'
+                device_type = 'device_type'
 
                 # 创建文件夹
                 if not os.path.exists(path):
                     os.makedirs(path)
 
+                # 读取模板文件
+                with open(os.path.join('..', 'template', 'driver.py'), 'r', encoding=encoding) as f:
+                    driver_py = f.read()
+                with open(os.path.join('..', 'template', 'driver.xml'), 'r', encoding=encoding) as f:
+                    driver_xml = f.read()
+
                 # 创建文件
-                with open(os.path.join(path, 'driver.py'), 'w') as f:
-                    f.write('')
-                with open(os.path.join(path, 'driver.xml'), 'w') as f:
-                    f.write('')
+                with open(os.path.join(path, 'driver.py'), 'w', encoding=encoding) as f:
+                    f.write(driver_py)
+                with open(os.path.join(path, 'driver.xml'), 'w', encoding=encoding) as f:
+                    f.write(driver_xml.format(name=name, device_type=device_type, upper_device_type=device_type.upper()))
                 print(f'创建驱动文件 "{name}" 成功')
         case 'update':
             from pathlib import Path
