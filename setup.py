@@ -8,13 +8,13 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='gimoos_ddf',
-    version='0.2.0',
-    description='',
+    version='0.3.0',
+    description='极墨思驱动开发框架',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    author='',
-    author_email='',
-    url='',
+    author='one-ccs',
+    author_email='one-ccs@foxmail.com',
+    url='https://github.com/one-ccs/gimoos_ddf',
     license='MIT',
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -28,10 +28,13 @@ setup(
     package_dir={},
     package_data={},
     exclude_package_data={},
-    install_requires=[],
+    install_requires=[
+        'tqdm',
+        'aiohttp',
+    ],
     entry_points={
         'console_scripts': [
-            'gimoos_ddf = gimoos_ddf.core.management:execute_from_command_line',
+            'gimoos_ddf = gimoos_ddf.management:execute_from_command_line',
         ],
     },
 )
