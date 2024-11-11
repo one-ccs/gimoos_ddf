@@ -1,6 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
+from logging import (
+    CRITICAL as CRITICAL,
+    FATAL as FATAL,
+    ERROR as ERROR,
+    WARNING as WARNING,
+    WARN as WARN,
+    INFO as INFO,
+    DEBUG as DEBUG,
+    NOTSET as NOTSET,
+)
 
 logger = logging.getLogger('gimoos_ddf')
 logger.setLevel(logging.INFO)

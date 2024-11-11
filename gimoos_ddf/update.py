@@ -24,8 +24,8 @@ class DriverUpdater():
         self.work_path          = Path(path)
         self.temp_path          = self.work_path / '.temp'
         self.update_record_file = self.temp_path / '.record'
-        self.update_record      = {}
-        self.tp                 = None
+        self.update_record      = {host: {}}
+        self.tq                 = None
         self.suc_list           = []
         self.fail_list          = []
         self.fail_msg_list      = []
@@ -56,11 +56,11 @@ class DriverUpdater():
         driver_py_mtime  = driver_py_file.stat().st_mtime
         driver_xml_mtime = driver_xml_file.stat().st_mtime
 
-        mtime = self.update_record.get(path.name, {})
+        mtime = self.update_record.get(self.host, {}).get(path.name, {})
         if mtime.get('driver.py', None) == driver_py_mtime and mtime.get('driver.xml', None) == driver_xml_mtime:
             return False
         else:
-            self.update_record[path.name] = {
+            self.update_record.setdefault(self.host, {})[path.name] = {
                 'driver.py': driver_py_mtime,
                 'driver.xml': driver_xml_mtime,
             }
@@ -122,7 +122,7 @@ class DriverUpdater():
                     else:
                         self.fail_list.append(path.name)
                         self.fail_msg_list.append((path.name, (await response.json()).get('message', '')))
-                self.tq.update(1)
+                self.tq and self.tq.update(1)
 
     async def update_async(self):
         self.read_update_record()
@@ -146,7 +146,7 @@ class DriverUpdater():
 
         logger.info(f'更新完成, 成功：{len(self.suc_list)}, 失败：{len(self.fail_list)}')
         for name, message in self.fail_msg_list:
-            self.update_record.pop(name, None)
+            self.update_record.setdefault(self.host, {}).pop(name, None)
             logger.warning(f'上传 "{name}" 失败, 原因: "{message}"')
 
         self.write_update_record()

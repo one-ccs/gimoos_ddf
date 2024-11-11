@@ -12,6 +12,12 @@ class enumConnectionType(Enum):
 
 
 class _C4:
+    ERROR   = 40
+    WARNING = 30
+    INFO    = 20
+    DEBUG   = 10
+    NOTSET  = 0
+
     PersistData: dict[str, Any]
     pub_log_level: int
     pub_is_longdown: bool
@@ -225,7 +231,7 @@ class _C4:
 
     # ---------------------- driver_public ----------------------
 
-    def pub_log_func(self: '_C4', log_level = 2):
+    def pub_log_func(self: '_C4', log_level = 20):
         """装饰器，打印函数调用日志"""
 
     def pub_catch_exception(self: '_C4', is_raise = True):
@@ -244,9 +250,9 @@ class _C4:
         """初始化公共函数库，并将持久化数据推送到前端（忽略以 _ 开头的属性）"""
 
     def pub_set_log_level(self: '_C4', level: int | str) -> None:
-        """设置日志级别 0 无 1 信息 2 调试 3 错误"""
+        """设置日志级别 0 无 10 调试 20 信息 30 警告 40 错误"""
 
-    def pub_log(self: '_C4', message: str, level: int = 1) -> None:
+    def pub_log(self: '_C4', message: str, level: int = 20) -> None:
         """打印日志"""
 
     def pub_get_PD(self: '_C4', key: str, default=None):
@@ -305,6 +311,9 @@ class _C4:
         Returns:
             str: 格式化后的 16 进制字符串。
         """
+
+    def pub_percent_hex(self: '_C4', percent: int) -> str:
+        """将百分比转换为 16 进制字符串形式"""
 
     def pub_int_to_bin(self: '_C4', num: int, length: int = 8) -> str:
         """将整数转换为指定长度的2进制字符串形式

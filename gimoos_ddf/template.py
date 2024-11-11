@@ -65,8 +65,9 @@ TEMPLATE_XML = """<devicedata>
                 <readonly>false</readonly>
                 <items>
                     <item>无</item>
-                    <item>信息</item>
                     <item>调试</item>
+                    <item>信息</item>
+                    <item>警告</item>
                     <item>错误</item>
                 </items>
             </property>
@@ -355,7 +356,7 @@ def OnTimerExpird(timer_id):
             C4.pub_update_property('在线状态', '离线')
 
     if timer_id == reconnect_timer and C4.pub_get_PD('控制方式') == '网络':
-        C4.pub_log('网络重连中...', 2)
+        C4.pub_log('网络重连中...')
         C4.pub_destroy_connection('TS', TS_PORT, TS_CHANNEL)
         C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
 

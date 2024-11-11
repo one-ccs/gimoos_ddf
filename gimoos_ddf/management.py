@@ -3,6 +3,7 @@
 
 def execute_from_command_line():
     import argparse
+    from pathlib import Path
 
     from gimoos_ddf import __version__
     from gimoos_ddf import DriverType
@@ -17,6 +18,7 @@ def execute_from_command_line():
     parser.add_argument('-h', '--help', help='显示帮助信息并退出', action='help')
     parser.add_argument('-v', '--version', help='显示版本信息并退出', action='version', version=f'%(prog)s {__version__}')
     parser.add_argument('--path', help='工作路径', default='.')
+    parser.add_argument('--lv', help='日志级别', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'])
 
     parser_create = subparsers.add_parser('create', help='创建驱动', add_help=False)
     parser_create.add_argument('-h', '--help', help='显示帮助信息并退出', action='help')
@@ -30,6 +32,9 @@ def execute_from_command_line():
     parser_update.add_argument('-p', help='密码, 默认为 123456', default='123456')
 
     args = parser.parse_args()
+
+    logger.setLevel(args.lv)
+    logger.debug(f'工作路径: {Path(args.path).absolute()}')
 
     match args.cmd:
         case 'create':
