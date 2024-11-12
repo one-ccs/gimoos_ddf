@@ -6,7 +6,7 @@ import asyncio
 from pathlib import Path
 from datetime import datetime
 
-from aiohttp import ClientSession, FormData, ClientConnectorError, ClientError
+from aiohttp import ClientSession, ClientTimeout, FormData, ClientConnectorError, ClientError
 from tqdm import tqdm
 
 from .logger import logger
@@ -82,7 +82,7 @@ class DriverUpdater():
         return list
 
     async def login(self):
-        async with ClientSession() as session:
+        async with ClientSession(timeout=ClientTimeout(total=3)) as session:
             async with session.post(self.url, json={
                 "project": "items",
                 "type": "im-function",
@@ -154,6 +154,8 @@ class DriverUpdater():
     def update(self):
         try:
             asyncio.get_event_loop().run_until_complete(self.update_async())
+        except asyncio.TimeoutError:
+            logger.error(f'连接 {self.host} 超时')
         except ClientConnectorError:
             logger.error(f'连接 {self.host} 失败')
         except ClientError as e:

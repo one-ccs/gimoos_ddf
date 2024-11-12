@@ -324,6 +324,7 @@ def OnPropertyChanged(key: str, value: str):
                 C4.pub_show_property('在线状态')
                 C4.pub_show_property('网络地址')
                 C4.pub_show_property('网络端口')
+                C4.UpdateProperty('网络地址', C4.pub_get_PD('网络地址'))
             else:
                 C4.pub_hide_property('在线状态')
                 C4.pub_hide_property('网络地址')
@@ -374,12 +375,14 @@ def OnInit(**kwargs):
     online_timer = C4.pub_set_interval(5 * 60)
     reconnect_timer = C4.pub_set_interval(60 * 60)
 
-    if 'ip' in kwargs:
+    if 'ip' in kwargs and C4.pub_get_PD('控制方式', '网络') == '网络':
+        C4.pub_log(f'初始化控制方式为网络: {kwargs["ip"]}', C4.DEBUG)
         C4.pub_update_property('控制方式', '网络')
         OnPropertyChanged('控制方式', '网络')
     else:
-        OnPropertyChanged('控制方式', C4.pub_get_PD('控制方式', '串口'))
-    OnPropertyChanged('网络地址', C4.pub_get_PD('网络地址'))
+        _ = C4.pub_get_PD('控制方式', '串口')
+        C4.pub_log(f'初始化控制方式为 "{_}"', C4.DEBUG)
+        OnPropertyChanged('控制方式', _)
 
 
 @C4.pub_catch_exception()
