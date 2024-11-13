@@ -315,6 +315,9 @@ class _C4:
     def pub_percent_hex(self: '_C4', percent: int) -> str:
         """将百分比转换为 16 进制字符串形式"""
 
+    def pub_parse_percent_hex(self: '_C4', hex_str: str, base: int = 102) -> int:
+        """将 16 进制字符串形式的百分比转换为百分比形式"""
+
     def pub_int_to_bin(self: '_C4', num: int, length: int = 8) -> str:
         """将整数转换为指定长度的2进制字符串形式
 
