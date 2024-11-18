@@ -128,6 +128,17 @@ TEMPLATE_XML = """<devicedata>
         </connection>
 
         <!-- 外部数据通道（输入输出） -->
+        <connection>
+            <id>200</id>
+            <connectionname>HDMI 1</connectionname>
+            <type>6</type>
+            <consumer>False</consumer>
+            <classes>
+                <class>
+                    <classname>HDMI</classname>
+                </class>
+            </classes>
+        </connection>
     </connections>
 </devicedata>
 """
@@ -145,6 +156,8 @@ KEYS_DATA = {
         "OFF":              "",
         "VOLUME_UP":        "",
         "VOLUME_DOWN":      "",
+        "MUTE_ON":          "",
+        "MUTE_OFF":         "",
         "MUTE_TOGGLE":      "",
         "NUMBER_1":         "",
         "NUMBER_2":         "",
@@ -186,6 +199,8 @@ KEYS_DATA = {
         "OFF":              "",
         "VOLUME_UP":        "",
         "VOLUME_DOWN":      "",
+        "MUTE_ON":          "",
+        "MUTE_OFF":         "",
         "MUTE_TOGGLE":      "",
         "NUMBER_1":         "",
         "NUMBER_2":         "",
@@ -197,12 +212,13 @@ KEYS_DATA = {
         "NUMBER_8":         "",
         "NUMBER_9":         "",
         "NUMBER_0":         "",
-        "HOME":             "",
-        "MENU":             "",
         "UP":               "",
         "DOWN":             "",
         "LEFT":             "",
         "RIGHT":            "",
+        "HOME":             "",
+        "MENU":             "",
+        "INFO":             "",
         "ENTER":            "",
         "CANCEL":           "",
         "PLAY":             "",
@@ -366,9 +382,6 @@ def OnTimerExpird(timer_id):
 def OnInit(**kwargs):
     \"""设备初始化事件\"""
     global online_timer, reconnect_timer
-
-    if 'mac' in kwargs:
-        kwargs['mac'] = kwargs['mac'][:-4]
 
     C4.pub_init(PersistData, **kwargs)
 
