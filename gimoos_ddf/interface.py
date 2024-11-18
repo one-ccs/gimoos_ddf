@@ -302,6 +302,15 @@ class _C4:
             int: 计算得到的 CRC-16-MODBUS 校验值。
         """
 
+    def pub_make_jsonrpc(self: '_C4', method: str, params: dict | None = None, version: str = '2.0') -> str:
+        """生成 jsonrpc 格式的请求数据"""
+
+    def pub_json_dumps(self: '_C4', data: dict, indent: int = 4) -> str:
+        """将字典数据转换为 json 格式"""
+
+    def pub_ishex(text: str):
+        """判断字符串是否为 16 进制字符串"""
+
     def pub_format_hex(self: '_C4', hex_str: str, reverse: bool = False) -> str:
         """格式化 16 进制字符串，每 8 位插入一个空格。
 

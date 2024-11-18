@@ -128,8 +128,21 @@ TEMPLATE_XML = """<devicedata>
         </connection>
 
         <!-- 外部数据通道（输入输出） -->
+        <!-- 外部数据通道（输入） -->
         <connection>
             <id>200</id>
+            <connectionname>HDMI 1</connectionname>
+            <type>6</type>
+            <consumer>True</consumer>
+            <classes>
+                <class>
+                    <classname>HDMI</classname>
+                </class>
+            </classes>
+        </connection>
+        <!-- 外部数据通道（输出） -->
+        <connection>
+            <id>300</id>
             <connectionname>HDMI 1</connectionname>
             <type>6</type>
             <consumer>False</consumer>
@@ -279,7 +292,11 @@ def preprocess(str_command, t_params={}) -> str:
     if cmd := C4.pub_mute_toggle(str_command):
         return cmd
 
-    return str_command
+    match str_command:
+        case 'SET_INPUT':
+            return f'INPUT_{t_params["INPUT"]}'
+        case _:
+            return str_command
 
 
 @C4.pub_log_func()
