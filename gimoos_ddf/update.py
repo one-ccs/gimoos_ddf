@@ -14,6 +14,10 @@ from tqdm import tqdm
 from .logger import logger
 
 
+SDP = 'driver.py'
+SDX = 'driver.xml'
+
+
 class DriverUpdater():
     def __init__(self, path: str, host: str, username: str, password: str, ignore: list = []):
         self.host     = host
@@ -28,7 +32,7 @@ class DriverUpdater():
         self.temp_path          = self.work_path / '.temp'
         self.update_record_file = self.temp_path / '.record'
         self.update_record      = {host: {}}
-        self.tq                 = tqdm(desc=f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]}] 上传进度')
+        self.tq                 = None
         self.suc_list           = []
         self.fail_list          = []
         self.fail_msg_list      = []
@@ -36,54 +40,55 @@ class DriverUpdater():
     def __repr__(self):
         return f"DriverUpdater({self.host})"
 
+    def __get_mtime(self, path: Path) -> int:
+        return path.stat().st_mtime_ns
+
     def read_update_record(self):
         if not self.temp_path.exists():
             self.temp_path.mkdir()
 
-        if not self.update_record_file.exists():
-            return None
-
-        with open(self.update_record_file, 'r', encoding=self.encoding) as f:
-            try:
-                self.update_record = json.load(f)
-            except:
-                self.update_record = {}
+        if self.update_record_file.exists():
+            with open(self.update_record_file, 'r', encoding=self.encoding) as f:
+                try:
+                    self.update_record = json.load(f)
+                except:
+                    logger.warning(f'读取更新记录文件失败, 文件格式有误')
 
     def write_update_record(self):
         with open(self.update_record_file, 'w', encoding=self.encoding) as f:
             json.dump(self.update_record, f, ensure_ascii=False, indent=4)
 
-    def is_need_update(self, path: Path) -> bool:
-        if path.name in self.ignore:
-            return False
-
-        driver_py_file  = path / 'driver.py'
-        driver_xml_file = path / 'driver.xml'
-        driver_py_mtime  = driver_py_file.stat().st_mtime
-        driver_xml_mtime = driver_xml_file.stat().st_mtime
-
-        mtime = self.update_record.get(self.host, {}).get(path.name, {})
-        if mtime.get('driver.py', None) == driver_py_mtime and mtime.get('driver.xml', None) == driver_xml_mtime:
-            return False
-        else:
-            self.update_record.setdefault(self.host, {})[path.name] = {
-                'driver.py': driver_py_mtime,
-                'driver.xml': driver_xml_mtime,
-            }
-            return True
-
-    def get_update_list(self):
-        work_path = Path(self.work_path)
-
+    def get_update_list(self) -> list[tuple[Path, dict]]:
         list = []
-        for item in work_path.iterdir():
-                # 包含 driver.py 和 driver.xml
-            if (item.is_dir()
-                and (item / 'driver.py').exists()
-                and (item / 'driver.xml').exists()
-                and self.is_need_update(item)
-            ):
-                list.append(item)
+        for item in self.work_path.iterdir():
+            if item.name in self.ignore:
+                logger.debug(f'路径 "{item}" 在忽略列表中, 已忽略')
+                continue
+
+            if not item.is_dir():
+                logger.debug(f'路径 "{item}" 不是目录, 已忽略')
+                continue
+
+            if not (driver_py := item / SDP).exists():
+                logger.debug(f'路径 "{item}" 中没有 "driver.py" 文件, 已忽略')
+                continue
+
+            if not (driver_xml := item / SDX).exists():
+                logger.debug(f'路径 "{item}" 中没有 "driver.xml" 文件, 已忽略')
+                continue
+
+            mtime = self.update_record.get(self.host, {}).get(item.name, {})
+            driver_py_mtime = self.__get_mtime(driver_py)
+            driver_xml_mtime = self.__get_mtime(driver_xml)
+
+            if mtime.get(SDP) == driver_py_mtime and mtime.get(SDX) == driver_xml_mtime:
+                logger.debug(f'路径 "{item}" 未更改, 已忽略')
+                continue
+
+            list.append((item, {
+                SDP: driver_py_mtime,
+                SDX: driver_xml_mtime,
+            }))
 
         return list
 
@@ -105,12 +110,12 @@ class DriverUpdater():
                 else:
                     logger.error(f'登录失败，状态码：{response.status}')
 
-    async def _upload_file(self, path: Path):
+    async def _upload_file(self, path: Path, new_mtime: dict) -> bool:
         zip_file = self.temp_path / f'{path.name}.zip'
 
         # 增加驱动版本
         try:
-            with open(path / 'driver.xml', 'r', encoding=self.encoding) as f:
+            with open(path / SDX, 'r', encoding=self.encoding) as f:
                 xml = f.read()
             dom = minidom.parseString(xml)
             version_dom = dom.getElementsByTagName('version')[0].firstChild
@@ -129,16 +134,16 @@ class DriverUpdater():
         except (ExpatError, IndexError) as e:
             self.fail_list.append(path.name)
             self.fail_msg_list.append((path.name, f'更新驱动程序版本失败，请检查 \'{path.name}/driver.xml\' 文件格式是否正确, 错误信息：\'{e}\''))
-            return
+            return False
         except FileNotFoundError:
             self.fail_list.append(path.name)
             self.fail_msg_list.append((path.name, f'更新驱动程序版本失败，请检查 \'{path.name}/driver.xml\' 文件是否存在'))
-            return
+            return False
 
         # 构建 zip 文件
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-            zf.write(str(path / 'driver.py'), 'driver.py')
-            zf.writestr('driver.xml', dom)
+            zf.write(str(path / SDP), SDP)
+            zf.writestr(SDX, dom)
 
         # 上传 zip 文件
         with open(zip_file, 'rb') as f:
@@ -153,16 +158,19 @@ class DriverUpdater():
                     if response.status == 200:
                         self.suc_list.append(path.name)
                         # 写入新版本号
-                        with open(path / 'driver.xml', 'w', encoding=self.encoding) as f:
+                        with open(path / SDX, 'w', encoding=self.encoding) as f:
                             f.write(dom)
                         # 更新记录
-                        self.update_record.setdefault(self.host, {})[path.name]['driver.xml'] = Path(path / 'driver.xml').stat().st_mtime
+                        new_mtime[SDX] = self.__get_mtime(path / SDX)
+                        return True
                     else:
                         self.fail_list.append(path.name)
                         self.fail_msg_list.append((path.name, (await response.json()).get('message', '')))
+                        return False
 
-    async def upload_file(self, path: Path):
-        await self._upload_file(path)
+    async def upload_file(self, path: Path, new_mtime: dict):
+        if await self._upload_file(path, new_mtime):
+            self.update_record.setdefault(self.host, {})[path.name] = new_mtime
         self.tq.update(1)
 
     async def update_async(self):
@@ -177,9 +185,9 @@ class DriverUpdater():
         if not self.token:
             return
 
-        tasks = [asyncio.ensure_future(self.upload_file(item)) for item in list]
+        tasks = [asyncio.ensure_future(self.upload_file(*item)) for item in list]
 
-        self.tq.total = len(tasks)
+        self.tq = tqdm(total=len(tasks), desc=f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]}] 上传进度')
         await asyncio.gather(*tasks)
         self.tq.close()
 
