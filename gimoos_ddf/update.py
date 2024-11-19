@@ -15,11 +15,12 @@ from .logger import logger
 
 
 class DriverUpdater():
-    def __init__(self, path: str, host: str, username: str, password: str):
+    def __init__(self, path: str, host: str, username: str, password: str, ignore: list = []):
         self.host     = host
         self.url      = f'http://{host}/interface/db/selector'
         self.username = username
         self.password = password
+        self.ignore   = ignore
 
         self.token              = None
         self.encoding           = 'utf-8'
@@ -53,6 +54,9 @@ class DriverUpdater():
             json.dump(self.update_record, f, ensure_ascii=False, indent=4)
 
     def is_need_update(self, path: Path) -> bool:
+        if path.name in self.ignore:
+            return False
+
         driver_py_file  = path / 'driver.py'
         driver_xml_file = path / 'driver.xml'
         driver_py_mtime  = driver_py_file.stat().st_mtime
@@ -107,20 +111,21 @@ class DriverUpdater():
         # 增加驱动版本
         try:
             with open(path / 'driver.xml', 'r', encoding=self.encoding) as f:
-                dom = minidom.parse(f)
-                version_dom = dom.getElementsByTagName('version')[0].firstChild
-                version = int(version_dom.data) + 1
-                version_dom.data = version
+                xml = f.read()
+            dom = minidom.parseString(xml)
+            version_dom = dom.getElementsByTagName('version')[0].firstChild
+            version = int(version_dom.data) + 1
+            version_dom.data = version
 
-                properties = dom.getElementsByTagName('property')
-                for p in properties:
-                    name = p.getElementsByTagName('name')[0].firstChild.data
-                    if isinstance(name, str):
-                        name = name.lower()
-                    if name == '驱动版本' or name == 'version':
-                        p.getElementsByTagName('default')[0].firstChild.data = version
-                        break
-                dom = dom.toxml().replace('<?xml version="1.0" ?>', '')
+            properties = dom.getElementsByTagName('property')
+            for p in properties:
+                name = p.getElementsByTagName('name')[0].firstChild.data
+                if isinstance(name, str):
+                    name = name.lower()
+                if name == '驱动版本' or name == 'version':
+                    p.getElementsByTagName('default')[0].firstChild.data = version
+                    break
+            dom = dom.toxml().replace('<?xml version="1.0" ?>', '')
         except (ExpatError, IndexError) as e:
             self.fail_list.append(path.name)
             self.fail_msg_list.append((path.name, f'更新驱动程序版本失败，请检查 \'{path.name}/driver.xml\' 文件格式是否正确, 错误信息：\'{e}\''))
@@ -178,7 +183,7 @@ class DriverUpdater():
         await asyncio.gather(*tasks)
         self.tq.close()
 
-        logger.info(f'更新完成, 成功：{len(self.suc_list)}, 失败：{len(self.fail_list)}')
+        logger.info(f'更新完成, 成功：{len(self.suc_list)}, 失败：{len(self.fail_list)}' + f', 忽略: {len(self.ignore)}' if self.ignore else '')
         for name, message in self.fail_msg_list:
             self.update_record.setdefault(self.host, {}).pop(name, None)
             logger.warning(f'更新 "{name}" 失败, 原因: "{message}"')

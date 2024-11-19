@@ -30,6 +30,7 @@ def execute_from_command_line():
     parser_update.add_argument('host', help='主机地址')
     parser_update.add_argument('-u', help='用户名, 默认为 root', default='root')
     parser_update.add_argument('-p', help='密码, 默认为 123456', default='123456')
+    parser_update.add_argument('-i', help='忽略列表, 以空格分隔', nargs='*', default=[])
 
     args = parser.parse_args()
 
@@ -47,7 +48,7 @@ def execute_from_command_line():
         case 'update':
             from .update import DriverUpdater
 
-            DriverUpdater(args.path, args.host, args.u, args.p).update()
+            DriverUpdater(args.path, args.host, args.u, args.p, args.i).update()
 
 
 if __name__ == '__main__':
