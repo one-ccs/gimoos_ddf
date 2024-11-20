@@ -3,6 +3,7 @@
 import zipfile
 import json
 import asyncio
+import hashlib
 from pathlib import Path
 from datetime import datetime
 from xml.dom import minidom
@@ -40,8 +41,8 @@ class DriverUpdater():
     def __repr__(self):
         return f"DriverUpdater({self.host})"
 
-    def __get_mtime(self, path: Path) -> int:
-        return path.stat().st_mtime_ns
+    def __get_hash(self, path: Path) -> int:
+        return hashlib.md5(path.read_bytes()).hexdigest()
 
     def read_update_record(self):
         if not self.temp_path.exists():
@@ -77,17 +78,17 @@ class DriverUpdater():
                 logger.debug(f'路径 "{item}" 中没有 "driver.xml" 文件, 已忽略')
                 continue
 
-            mtime = self.update_record.get(self.host, {}).get(item.name, {})
-            driver_py_mtime = self.__get_mtime(driver_py)
-            driver_xml_mtime = self.__get_mtime(driver_xml)
+            hash = self.update_record.get(self.host, {}).get(item.name, {})
+            driver_py_hash = self.__get_hash(driver_py)
+            driver_xml_hash = self.__get_hash(driver_xml)
 
-            if mtime.get(SDP) == driver_py_mtime and mtime.get(SDX) == driver_xml_mtime:
+            if hash.get(SDP) == driver_py_hash and hash.get(SDX) == driver_xml_hash:
                 logger.debug(f'路径 "{item}" 未更改, 已忽略')
                 continue
 
             list.append((item, {
-                SDP: driver_py_mtime,
-                SDX: driver_xml_mtime,
+                SDP: driver_py_hash,
+                SDX: driver_xml_hash,
             }))
 
         return list
@@ -110,13 +111,12 @@ class DriverUpdater():
                 else:
                     logger.error(f'登录失败，状态码：{response.status}')
 
-    async def _upload_file(self, path: Path, new_mtime: dict) -> bool:
+    async def _upload_file(self, path: Path, new_hash: dict) -> bool:
         zip_file = self.temp_path / f'{path.name}.zip'
 
         # 增加驱动版本
         try:
-            with open(path / SDX, 'r', encoding=self.encoding) as f:
-                xml = f.read()
+            xml = (path / SDX).read_text(encoding=self.encoding)
             dom = minidom.parseString(xml)
             version_dom = dom.getElementsByTagName('version')[0].firstChild
             version = int(version_dom.data) + 1
@@ -161,16 +161,16 @@ class DriverUpdater():
                         with open(path / SDX, 'w', encoding=self.encoding) as f:
                             f.write(dom)
                         # 更新记录
-                        new_mtime[SDX] = self.__get_mtime(path / SDX)
+                        new_hash[SDX] = self.__get_hash(path / SDX)
                         return True
                     else:
                         self.fail_list.append(path.name)
                         self.fail_msg_list.append((path.name, (await response.json()).get('message', '')))
                         return False
 
-    async def upload_file(self, path: Path, new_mtime: dict):
-        if await self._upload_file(path, new_mtime):
-            self.update_record.setdefault(self.host, {})[path.name] = new_mtime
+    async def upload_file(self, path: Path, new_hash: dict):
+        if await self._upload_file(path, new_hash):
+            self.update_record.setdefault(self.host, {})[path.name] = new_hash
         self.tq.update(1)
 
     async def update_async(self):
