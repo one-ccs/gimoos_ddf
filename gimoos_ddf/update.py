@@ -53,7 +53,7 @@ class DriverUpdater():
                 try:
                     self.update_record = json.load(f)
                 except:
-                    logger.warning(f'读取更新记录文件失败, 文件格式有误')
+                    logger.warning(f'更新记录文件格式有误, 已忽略')
 
     def write_update_record(self):
         with open(self.update_record_file, 'w', encoding=self.encoding) as f:
@@ -87,6 +87,7 @@ class DriverUpdater():
                 continue
 
             list.append((item, {
+                'upload_only': True if not hash else False,  # 如果没有记录，则只上传文件，不更新版本号
                 SDP: driver_py_hash,
                 SDX: driver_xml_hash,
             }))
@@ -114,36 +115,40 @@ class DriverUpdater():
     async def _upload_file(self, path: Path, new_hash: dict) -> bool:
         zip_file = self.temp_path / f'{path.name}.zip'
 
-        # 增加驱动版本
-        try:
-            xml = (path / SDX).read_text(encoding=self.encoding)
-            dom = minidom.parseString(xml)
-            version_dom = dom.getElementsByTagName('version')[0].firstChild
-            version = int(version_dom.data) + 1
-            version_dom.data = version
+        if not new_hash.get('upload_only'):
+            # 增加驱动版本
+            try:
+                xml = (path / SDX).read_text(encoding=self.encoding)
+                dom = minidom.parseString(xml)
+                version_dom = dom.getElementsByTagName('version')[0].firstChild
+                version = int(version_dom.data) + 1
+                version_dom.data = version
 
-            properties = dom.getElementsByTagName('property')
-            for p in properties:
-                name = p.getElementsByTagName('name')[0].firstChild.data
-                if isinstance(name, str):
-                    name = name.lower()
-                if name == '驱动版本' or name == 'version':
-                    p.getElementsByTagName('default')[0].firstChild.data = version
-                    break
-            dom = dom.toxml().replace('<?xml version="1.0" ?>', '')
-        except (ExpatError, IndexError) as e:
-            self.fail_list.append(path.name)
-            self.fail_msg_list.append((path.name, f'更新驱动程序版本失败，请检查 \'{path.name}/driver.xml\' 文件格式是否正确, 错误信息：\'{e}\''))
-            return False
-        except FileNotFoundError:
-            self.fail_list.append(path.name)
-            self.fail_msg_list.append((path.name, f'更新驱动程序版本失败，请检查 \'{path.name}/driver.xml\' 文件是否存在'))
-            return False
+                properties = dom.getElementsByTagName('property')
+                for p in properties:
+                    name = p.getElementsByTagName('name')[0].firstChild.data
+                    if isinstance(name, str):
+                        name = name.lower()
+                    if name == '驱动版本' or name == 'version':
+                        p.getElementsByTagName('default')[0].firstChild.data = version
+                        break
+                dom = dom.toxml().replace('<?xml version="1.0" ?>', '')
+            except (ExpatError, IndexError) as e:
+                self.fail_list.append(path.name)
+                self.fail_msg_list.append((path.name, f'更新驱动程序版本失败，请检查 \'{path.name}/driver.xml\' 文件格式是否正确, 错误信息：\'{e}\''))
+                return False
+            except FileNotFoundError:
+                self.fail_list.append(path.name)
+                self.fail_msg_list.append((path.name, f'更新驱动程序版本失败，请检查 \'{path.name}/driver.xml\' 文件是否存在'))
+                return False
 
         # 构建 zip 文件
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zf:
             zf.write(str(path / SDP), SDP)
-            zf.writestr(SDX, dom)
+            if not new_hash.get('upload_only'):
+                zf.writestr(SDX, dom)
+            else:
+                zf.write(str(path / SDX), SDX)
 
         # 上传 zip 文件
         with open(zip_file, 'rb') as f:
@@ -157,11 +162,12 @@ class DriverUpdater():
                 async with session.post(self.url, data=data, headers=headers) as response:
                     if response.status == 200:
                         self.suc_list.append(path.name)
-                        # 写入新版本号
-                        with open(path / SDX, 'w', encoding=self.encoding) as f:
-                            f.write(dom)
-                        # 更新记录
-                        new_hash[SDX] = self.__get_hash(path / SDX)
+                        if not new_hash.get('upload_only'):
+                            # 写入新版本号
+                            with open(path / SDX, 'w', encoding=self.encoding) as f:
+                                f.write(dom)
+                            # 更新记录
+                            new_hash[SDX] = self.__get_hash(path / SDX)
                         return True
                     else:
                         self.fail_list.append(path.name)
@@ -170,6 +176,7 @@ class DriverUpdater():
 
     async def upload_file(self, path: Path, new_hash: dict):
         if await self._upload_file(path, new_hash):
+            new_hash.pop('upload_only', None)
             self.update_record.setdefault(self.host, {})[path.name] = new_hash
         self.tq.update(1)
 

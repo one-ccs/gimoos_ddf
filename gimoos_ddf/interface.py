@@ -273,6 +273,15 @@ class _C4:
     def pub_show_property(self: '_C4', property: str) -> None:
         """显示属性"""
 
+    def pub_sleep(self: '_C4', seconds: float) -> None:
+        """让当前线程休眠指定秒数"""
+
+    def pub_time(self: '_C4') -> float:
+        """获取当前时间戳 (秒)"""
+
+    def pub_pass_time(self: '_C4', time: float) -> float:
+        """返回当前时间戳与指定时间戳的差值 (秒)"""
+
     def pub_set_interval(self: '_C4', interval: float, unit: str = 'SECONDS') -> int:
         """添加一个定时器，返回定时器 id"""
 
@@ -308,7 +317,7 @@ class _C4:
     def pub_json_dumps(self: '_C4', data: dict, indent: int = 4) -> str:
         """将字典数据转换为 json 格式"""
 
-    def pub_ishex(text: str):
+    def pub_ishex(self: '_C4', text: str):
         """判断字符串是否为 16 进制字符串"""
 
     def pub_format_hex(self: '_C4', hex_str: str, reverse: bool = False) -> str:
