@@ -42,7 +42,7 @@ class DriverUpdater():
         return f"DriverUpdater({self.host})"
 
     def __get_hash(self, path: Path) -> int:
-        return hashlib.md5(path.read_bytes()).hexdigest()
+        return hashlib.md5(path.read_bytes().strip()).hexdigest()
 
     def read_update_record(self):
         if not self.temp_path.exists():

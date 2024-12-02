@@ -8,7 +8,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='gimoos_ddf',
-    version='0.3.6',
+    version='0.3.7',
     description='极墨思驱动开发框架',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',

@@ -3,6 +3,7 @@ from typing import Any, Callable
 from enum import Enum
 from threading import Thread
 from queue import SimpleQueue
+import math
 
 
 class enumConnectionType(Enum):
@@ -12,6 +13,7 @@ class enumConnectionType(Enum):
 
 
 class _C4:
+    NOTHING = math.inf
     ERROR   = 40
     WARNING = 30
     INFO    = 20
@@ -66,6 +68,9 @@ class _C4:
     @deprecated('使用 C4.pub_log(...) 代替')
     def Log(self, message, level="INFO", is_display=True):
         """记录日志, is_display=False时不在页面日志显示"""
+
+    def SetLogLevel(self, level: str = "INFO"):
+        """设置日志级别 DEBUG, INFO, WARN, ERROR, FATAL, 默认为INFO"""
 
     # ---------------------- base64 ----------------------
 
@@ -191,6 +196,9 @@ class _C4:
     def get_states(self, proxy_id):
         """获取指定设备的状态"""
 
+    def SetDriverState(self, proxy_id, key, value):
+        """设置指定设备的状态"""
+
     def get_scenes(self):
         """获取场景列表"""
 
@@ -207,11 +215,14 @@ class _C4:
     def GetDriverXml(self, proxy_id, key):
         """获取指定设备的指定xml标签内容"""
 
-    def SetDriverState(self, proxy_id, key, value):
-        """设置指定设备的状态"""
+    def RegisterDiscover(self, mac: str) -> bool:
+        """注册此状态机设备至discover表中，成功返回True，失败返回False"""
 
-    def del_discover(self):
-        """删除发现发现设备表中的此设备"""
+    def UnRegisterDiscover(self, mac: str) -> bool:
+        """删除discover表中对应mac的记录，成功返回True，失败返回False"""
+
+    def IsInDiscover(self, mac: str) -> bool:
+        """查询设备mac是否在discover表中，存在返回True，不存在返回False"""
 
     # ---------------------- timer ----------------------
 
@@ -417,10 +428,13 @@ class _C4:
     def pub_send_to_internal(self: '_C4', command: str, params: dict, channel: int = 5001) -> None:
         """向内部通道发送命令，改变设备状态"""
 
-    def pub_send_to_master(self: '_C4', command: str, params: dict, channel: int = 4000) -> None:
+    def pub_send_to_device(self: '_C4', cmd: str, params: dict, device_id: int) -> None:
+        """向指定设备发送命令"""
+
+    def pub_send_to_master(self: '_C4', command: str, params: dict | str, channel: int = 4000) -> None:
         """向主控设备发送数据"""
 
-    def pub_send_to_slave(self: '_C4', command: str, params: dict, channel: int | str = '4000') -> None:
+    def pub_send_to_slave(self: '_C4', command: str, params: dict | str, channel: int | str = '4000') -> None:
         """向从控设备发送消息，channel 为 str 时，向所有从机发送"""
 
     def pub_WOL(self: '_C4', mac_hex: str, channel: int = 3999) -> None:
