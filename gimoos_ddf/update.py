@@ -31,8 +31,8 @@ class DriverUpdater():
         self.encoding           = 'utf-8'
         self.work_path          = Path(path)
         self.temp_path          = self.work_path / '.temp'
-        self.update_record_file = self.temp_path / '.record'
-        self.update_record      = {host: {}}
+        self.record_file        = self.temp_path / '.record'
+        self.record             = {host: {}}
         self.tq                 = None
         self.suc_list           = []
         self.fail_list          = []
@@ -44,23 +44,26 @@ class DriverUpdater():
     def __get_hash(self, path: Path) -> int:
         return hashlib.md5(path.read_bytes().strip()).hexdigest()
 
-    def read_update_record(self):
+    def load_record(self):
         if not self.temp_path.exists():
             self.temp_path.mkdir()
 
-        if self.update_record_file.exists():
-            with open(self.update_record_file, 'r', encoding=self.encoding) as f:
-                try:
-                    self.update_record = json.load(f)
-                except:
-                    logger.warning(f'更新记录文件格式有误, 已忽略')
+        try:
+            self.record = json.loads(self.record_file.read_text(encoding=self.encoding))
+        except:
+            self.record = {}
+            logger.warning(f'更新记录读取失败, 使用默认值。')
 
-    def write_update_record(self):
-        with open(self.update_record_file, 'w', encoding=self.encoding) as f:
-            json.dump(self.update_record, f, ensure_ascii=False, indent=4)
+    def dump_record(self):
+        self.record_file.write_text(
+            json.dumps(self.record, ensure_ascii=False),
+            encoding=self.encoding,
+        )
 
     def get_update_list(self) -> list[tuple[Path, dict]]:
+        last_host = self.record.get('last_host', None)
         list = []
+
         for item in self.work_path.iterdir():
             if item.name in self.ignore:
                 logger.debug(f'路径 "{item}" 在忽略列表中, 已忽略')
@@ -78,7 +81,7 @@ class DriverUpdater():
                 logger.debug(f'路径 "{item}" 中没有 "driver.xml" 文件, 已忽略')
                 continue
 
-            hash = self.update_record.get(self.host, {}).get(item.name, {})
+            hash = self.record.get(self.host, {}).get(item.name, {})
             driver_py_hash = self.__get_hash(driver_py)
             driver_xml_hash = self.__get_hash(driver_xml)
 
@@ -86,8 +89,14 @@ class DriverUpdater():
                 logger.debug(f'路径 "{item}" 未更改, 已忽略')
                 continue
 
+            # 如果没有记录或者上次上传的主机和当前主机不一致，则只上传文件，不更新版本号
+            if not hash or last_host != self.host:
+                upload_only = True
+            else:
+                upload_only = False
+
             list.append((item, {
-                'upload_only': True if not hash else False,  # 如果没有记录，则只上传文件，不更新版本号
+                'upload_only': upload_only,
                 SDP: driver_py_hash,
                 SDX: driver_xml_hash,
             }))
@@ -177,11 +186,11 @@ class DriverUpdater():
     async def upload_file(self, path: Path, new_hash: dict):
         if await self._upload_file(path, new_hash):
             new_hash.pop('upload_only', None)
-            self.update_record.setdefault(self.host, {})[path.name] = new_hash
+            self.record.setdefault(self.host, {})[path.name] = new_hash
         self.tq.update(1)
 
     async def update_async(self):
-        self.read_update_record()
+        self.load_record()
 
         list = self.get_update_list()
         if not list:
@@ -200,10 +209,12 @@ class DriverUpdater():
 
         logger.info(f'更新完成, 成功：{len(self.suc_list)}, 失败：{len(self.fail_list)}' + f', 忽略: {len(self.ignore)}' if self.ignore else '')
         for name, message in self.fail_msg_list:
-            self.update_record.setdefault(self.host, {}).pop(name, None)
+            self.record.setdefault(self.host, {}).pop(name, None)
             logger.warning(f'更新 "{name}" 失败, 原因: "{message}"')
 
-        self.write_update_record()
+        self.record['last_host'] = self.host
+
+        self.dump_record()
 
     def update(self):
         try:
