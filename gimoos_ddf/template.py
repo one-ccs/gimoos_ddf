@@ -266,23 +266,37 @@ def getSerialParameters(input_binding_id):
 
 
 def check_online():
-    from time import time, sleep
-
     C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('General.Ping'))
-    sleep(3)
-    return time() - last_data_in <= 3
+    C4.pub_sleep(3)
+    return C4.pub_pass_time(last_data_in) <= 3
 
 
 def send_to_proxy(cmd: str, params: dict):
     if not (key_data := KEYS_DATA.get(C4.pub_get_PD('控制方式', '串口'), {}).get(cmd)):
-        C4.pub_log(f'未知命令: {cmd}')
+        C4.pub_log(f'未知命令: {cmd}', C4.DEBUG)
         return
 
     if C4.pub_get_PD('控制方式', '串口') == '串口':
         C4.pub_send_to_serial(key_data)
     else:
         if cmd == 'ON':
-            C4.pub_WOL(C4.pub_get_PD('MAC地址'))
+            if not C4.pub_WOL(C4.pub_get_PD('MAC地址')):
+                return
+
+            times = 5
+            while times:
+                C4.pub_log('等待设备开机...')
+                C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
+                if check_online():
+                    break
+                times -= 1
+                C4.pub_sleep(5)
+            if times == 0:
+                C4.pub_log('网络唤醒失败')
+                return
+            else:
+                C4.pub_log('网络唤醒成功')
+                C4.pub_update_property('在线状态', '在线')
         else:
             C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('OnKeyEvent', key_data))
     C4.pub_send_to_internal(cmd, params)
@@ -299,21 +313,22 @@ def preprocess(str_command, t_params={}) -> str:
             return str_command
 
 
-@C4.pub_log_func()
+@C4.pub_func_log(log_level=10)
 def received_from_serial(data: str):
     pass
 
 
-@C4.pub_catch_exception()
+@C4.pub_func_catch()
+@C4.pub_func_log(log_level=10)
 def ReceivedFromNetwork(BindID, Port, Data):
     \"""接收网络数据\"""
     global last_data_in
-    from time import time
 
-    last_data_in = time()
+    last_data_in = C4.pub_time()
 
 
-@C4.pub_catch_exception()
+@C4.pub_func_catch()
+@C4.pub_func_log(log_level=10)
 def ReceivedFromProxy(id_binding, str_command, t_params):
     \"""接收 Proxy 消息\"""
     if str_command == 'ReceivedFromSerial':
@@ -325,8 +340,8 @@ def ReceivedFromProxy(id_binding, str_command, t_params):
     C4.pub_longdown_delay_send(cmd, t_params, send_to_proxy, DELAY_MAP)
 
 
-@C4.pub_catch_exception()
-@C4.pub_log_func(log_level=1)
+@C4.pub_func_catch()
+@C4.pub_func_log(log_level=1)
 def ReceivedFromScene(bindingId, sceneId, command, params):
     \"""场景变化\"""
     match command:
@@ -338,7 +353,7 @@ def ReceivedFromScene(bindingId, sceneId, command, params):
             pass
 
 
-@C4.pub_catch_exception()
+@C4.pub_func_catch()
 def ExecuteCommand(str_command, t_params):
     \"""处理命令\"""
     match str_command:
@@ -346,7 +361,7 @@ def ExecuteCommand(str_command, t_params):
             C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('StartUpdate'))
 
 
-@C4.pub_catch_exception()
+@C4.pub_func_catch()
 def OnPropertyChanged(key: str, value: str):
     \"""属性改变事件\"""
     C4.pub_set_PD(key, value)
@@ -375,12 +390,12 @@ def OnPropertyChanged(key: str, value: str):
     C4.pub_save_PD()
 
 
-@C4.pub_catch_exception()
+@C4.pub_func_catch()
 def OnBindingChanged(binding_id, connection_event, other_device_id, other_binding_id):
     \"""链接改变事件\"""
 
 
-@C4.pub_catch_exception()
+@C4.pub_func_catch()
 def OnTimerExpird(timer_id):
     \"""定时器事件\"""
     if timer_id == online_timer and C4.pub_get_PD('控制方式') == '网络' and C4.pub_get_PD('网络地址'):
@@ -395,7 +410,7 @@ def OnTimerExpird(timer_id):
         C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
 
 
-@C4.pub_catch_exception()
+@C4.pub_func_catch()
 def OnInit(**kwargs):
     \"""设备初始化事件\"""
     global online_timer, reconnect_timer
@@ -415,7 +430,7 @@ def OnInit(**kwargs):
         OnPropertyChanged('控制方式', _)
 
 
-@C4.pub_catch_exception()
+@C4.pub_func_catch()
 def OnDestroy():
     \"""设备删除事件\"""
 """

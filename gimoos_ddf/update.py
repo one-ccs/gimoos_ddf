@@ -61,7 +61,7 @@ class DriverUpdater():
         )
 
     def get_update_list(self) -> list[tuple[Path, dict]]:
-        last_host = self.record.get('last_host', None)
+        last_host = self.record.get('last_host')
         list = []
 
         for item in self.work_path.iterdir():
@@ -117,7 +117,7 @@ class DriverUpdater():
                 },
             }) as response:
                 if response.status == 200:
-                    self.token = (await response.json()).get('data', {}).get('token', None)
+                    self.token = (await response.json()).get('data', {}).get('token')
                 else:
                     logger.error(f'登录失败，状态码：{response.status}')
 

@@ -1,7 +1,7 @@
 from typing_extensions import deprecated
-from typing import Any, Callable
+from typing import Any, Callable, Optional, Iterable, Mapping
 from enum import Enum
-from threading import Thread
+from threading import Thread, Event
 from queue import SimpleQueue
 import math
 
@@ -25,6 +25,7 @@ class _C4:
     pub_is_longdown: bool
     pub_delay_thread: Thread | None
     pub_delay_queue: SimpleQueue[tuple[str, dict, int, Callable[[str, dict], None]]]
+    pub_tasks: dict[int, tuple[Thread, Event]]
 
     # ---------------------- base ----------------------
 
@@ -184,6 +185,13 @@ class _C4:
     def get_all_devices(self):
         """获取显示在房间中设备的设备信息，房间信息以及楼层信息"""
 
+    def get_position_in_tree(self, proxy_id: int) -> dict:
+        """获取项目树中设备所在房间，楼层信息和获取房间所在楼层信息
+
+        返回的数据格式：
+            `{'floor_id':1,'floor_name':'xxx','room_id':'2','room_name':'xxx'}`
+        """
+
     def get_all_room_property(self):
         """获取所有房间的属性信息"""
 
@@ -224,6 +232,9 @@ class _C4:
     def IsInDiscover(self, mac: str) -> bool:
         """查询设备mac是否在discover表中，存在返回True，不存在返回False"""
 
+    def ExecuteScene(scene_id: int, command: str = 'EXECUTE'):
+        """执行场景，command为EXECUTE时，则为执行场景操作；command为TOGGLE时，反转场景，默认执行场景"""
+
     # ---------------------- timer ----------------------
 
     def AddTimer(self, nInterval=None, strUnits=None, bRepeat=False, idTimer=None) -> int:
@@ -242,19 +253,27 @@ class _C4:
 
     # ---------------------- driver_public ----------------------
 
-    def pub_log_func(self: '_C4', log_level = 20):
+    def pub_func_log(self: '_C4', log_level = 20):
         """装饰器，打印函数调用日志"""
 
-    def pub_catch_exception(self: '_C4', is_raise = True):
+    def pub_func_catch(self: '_C4', is_raise = False, on_except = None):
         """装饰器，捕获函数异常并打印日志
 
         注：请在 pub_init 之后调用，否则无法捕获异常。
 
         Args:
-            is_raise (bool, optional): 是否抛出异常. Defaults to True.
+            is_raise (bool, optional): 是否抛出异常. Defaults to False.
+            on_except (function, optional): 异常回调函数. Defaults to None.
 
         Returns:
             function: 装饰器函数。
+        """
+
+    def pub_func_hook(self: '_C4', hook):
+        """装饰器，在函数调用前后执行 hook 函数
+
+        Args:
+            hook (_type_): 钩子函数，参数为 ('before', *args, **kwargs) 或 ('after', *args, **kwargs), 若 `before` 返回 True 则不执行函数
         """
 
     def pub_init(self: '_C4', PersistData: dict, **kwargs) -> None:
@@ -301,6 +320,32 @@ class _C4:
 
     def pub_set_timeout(self: '_C4', interval: float, function: 'function', *args, **kwargs) -> object:
         """定时 n 秒后执行函数"""
+
+    def pub_execute_task(
+        self: '_C4',
+        target: Callable[[Event], None],
+        args: Iterable[Any] = (),
+        kwargs: Optional[Mapping[str, Any]] = None,
+        daemon: bool = True,
+    ) -> Optional[int]:
+        """执行一个任务
+
+        Args:
+            target (Callable[[threading.Event], None]): 运行的函数, 第一个位置参数固定为 stop_flag.
+            args (Iterable[Any], optional): 位置参数. 默认为 ().
+            kwargs (Optional[Mapping[str, Any]], optional): 关键字参数. 默认为 None.
+            daemon (bool, optional): 是否是守护线程. 默认为 True.
+
+        Returns:
+            Optional[int]: 任务 id
+        """
+
+    def pub_chancel_task(self: '_C4', task_id: int):
+        """取消一个任务 （设置任务的 stop_flag）
+
+        Args:
+            task_id (int): 任务 id
+        """
 
     def pub_crc16_xmodem(self: '_C4', data: bytes, polynomial = 0x1021) -> int:
         """
@@ -381,10 +426,10 @@ class _C4:
     def pub_mac_to_hex(self: '_C4', mac_str: str) -> str:
         """MAC 地址转为十六进制字符串"""
 
-    def pub_xml_to_dict(self: '_C4', xml: str) -> dict:
+    def pub_xml_to_dict(self: '_C4', xml: str, default = ...) -> dict:
         """将xml字符串转换为字典"""
 
-    def pub_dict_to_bytes_xml(self: '_C4', data: dict, root_name: str | None = None) -> bytes:
+    def pub_dict_to_xml(self: '_C4', data: dict, root_name: str | None = None, encoding: str = 'unicode') -> str:
         """将字典数据转换为xml格式"""
 
     def pub_fetch_get(self: '_C4', host, port, path, params = None, protocol = 'http', timeout = 3) -> object | None:
@@ -410,7 +455,7 @@ class _C4:
                 '?R' args[0]: 端口号
         """
 
-    def pub_destroy_connection(self: '_C4', type: str, port: int, channel: int = None) -> None:
+    def pub_destroy_connection(self: '_C4', type: str, port: int, channel: int | None = None) -> None:
         """关闭指定连接"""
 
     def pub_send_to_ir(self: '_C4', code: str, count: int = 1, is_hex: bool = False, channel: int = 3000) -> None:
@@ -437,7 +482,7 @@ class _C4:
     def pub_send_to_slave(self: '_C4', command: str, params: dict | str, channel: int | str = '4000') -> None:
         """向从控设备发送消息，channel 为 str 时，向所有从机发送"""
 
-    def pub_WOL(self: '_C4', mac_hex: str, channel: int = 3999) -> None:
+    def pub_WOL(self: '_C4', mac: str, channel: int = 3999) -> bool:
         """发送 WOL 包，实现网络唤醒"""
 
     def __pub_delay_thread(self: '_C4') -> None:

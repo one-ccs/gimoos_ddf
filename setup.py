@@ -8,7 +8,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='gimoos_ddf',
-    version='0.3.7',
+    version='0.3.8',
     description='极墨思驱动开发框架',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
@@ -29,6 +29,7 @@ setup(
     package_data={},
     exclude_package_data={},
     install_requires=[
+        'typing_extensions',
         'tqdm',
         'aiohttp',
     ],
