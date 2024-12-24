@@ -89,11 +89,18 @@ class DriverUpdater():
                 logger.debug(f'路径 "{item}" 未更改, 已忽略')
                 continue
 
-            # 如果没有记录或者上次上传的主机和当前主机不一致，则只上传文件，不更新版本号
-            if not hash or last_host != self.host:
+            upload_only = False
+
+            # 若没有更新记录，仅上传
+            if not hash:
                 upload_only = True
-            else:
-                upload_only = False
+
+            # 更换主机，且 hash 与原主机 hash 一致，仅上传
+            if last_host != self.host:
+                last_hash = self.record.get(last_host, {}).get(item.name, {})
+
+                if last_hash.get(SDP) == driver_py_hash and last_hash.get(SDX) == driver_xml_hash:
+                    upload_only = True
 
             list.append((item, {
                 'upload_only': upload_only,
