@@ -182,7 +182,7 @@ class _C4:
     def get_device_info(self, room_id):
         """根据房间获取显示在房间的设备信息，根据设备大类分组"""
 
-    def get_all_devices(self):
+    def get_all_devices(self) -> list[dict[str, Any]]:
         """获取显示在房间中设备的设备信息，房间信息以及楼层信息"""
 
     def get_position_in_tree(self, proxy_id: int) -> dict:
@@ -207,7 +207,7 @@ class _C4:
     def SetDriverState(self, proxy_id, key, value):
         """设置指定设备的状态"""
 
-    def get_scenes(self):
+    def get_scenes(self) -> list[dict[str, Any]]:
         """获取场景列表"""
 
     @deprecated('使用 C4.SendToDevice(...) 代替')
