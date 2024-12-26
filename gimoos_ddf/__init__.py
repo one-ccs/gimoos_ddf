@@ -10,7 +10,7 @@ from .create import DriverType as DriverType
 
 
 
-__version__ = '0.3.9'
+__version__ = '0.3.10'
 
 __all__ = [
     '_C4',

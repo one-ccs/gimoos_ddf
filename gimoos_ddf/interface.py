@@ -25,6 +25,7 @@ class _C4:
     pub_is_longdown: bool
     pub_delay_thread: Thread | None
     pub_delay_queue: SimpleQueue[tuple[str, dict, int, Callable[[str, dict], None]]]
+    pub_jsonrpc_id: int
     pub_tasks: dict[int, tuple[Thread, Event]]
 
     # ---------------------- base ----------------------
@@ -118,7 +119,7 @@ class _C4:
     def GetRandomPort(self):
         """获取随机可用端口"""
 
-    def get_local_ip(self):
+    def get_local_ip(self) -> str:
         """获取本机IP地址"""
 
     def CreateServer(self, nPort=None, strDelimiter="", protocol="TCP", host="0.0.0.0") -> bool:
@@ -201,7 +202,7 @@ class _C4:
     def get_room_audio_device(self, room_id) -> list | None:
         """获取房间音频连接设备的device_id"""
 
-    def get_states(self, proxy_id):
+    def get_states(self, proxy_id) -> dict | None:
         """获取指定设备的状态"""
 
     def SetDriverState(self, proxy_id, key, value):
@@ -285,7 +286,7 @@ class _C4:
     def pub_log(self: '_C4', message: str, level: int = 20) -> None:
         """打印日志"""
 
-    def pub_get_PD(self: '_C4', key: str, default=None):
+    def pub_get_PD(self: '_C4', key: str, default=None) -> Any:
         """获取持久化数据"""
 
     def pub_set_PD(self: '_C4', key: str, value) -> None:
