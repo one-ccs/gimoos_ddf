@@ -3,6 +3,7 @@ from typing import Any, Callable, Optional, Iterable, Mapping
 from enum import Enum
 from threading import Thread, Event
 from queue import SimpleQueue
+from xknx import XKNX
 import math
 
 
@@ -27,6 +28,8 @@ class _C4:
     pub_delay_queue: SimpleQueue[tuple[str, dict, int, Callable[[str, dict], None]]]
     pub_jsonrpc_id: int
     pub_tasks: dict[int, tuple[Thread, Event]]
+    pub_xknx: XKNX | None
+
 
     # ---------------------- base ----------------------
 
@@ -438,6 +441,18 @@ class _C4:
 
     def pub_fetch_post(self: '_C4', host, port, path, params = None, data = None, protocol='http', timeout = 3) -> object | None:
         """requests.post 封装"""
+
+    def pub_knx_create(self: '_C4', addr: tuple[str, int], rate_limit: int = 20) -> None:
+        """创建 KNX 连接"""
+
+    def pub_knx_rate_limit(self: '_C4', rate_limit: int) -> None:
+        """设置 KNX 报文队列的发送速率，单位毫秒"""
+
+    def pub_knx_send(self: '_C4', group_address: str, value, value_type) -> None:
+        """向 KNX 设备发送数据"""
+
+    def pub_knx_is_alive(self: '_C4') -> bool:
+        """判断 KNX 连接是否存活"""
 
     def pub_create_connection(self: '_C4', type: str, host: str, *args) -> None:
         """建立指定连接

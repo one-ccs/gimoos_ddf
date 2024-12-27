@@ -32,6 +32,7 @@ setup(
         'typing_extensions',
         'tqdm',
         'aiohttp',
+        'xknx',
     ],
     entry_points={
         'console_scripts': [
