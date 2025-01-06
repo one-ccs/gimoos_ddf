@@ -5,7 +5,7 @@ TEMPLATE_XML = """<devicedata>
     <name>{name}</name>
     <alias>{name}</alias>
     <model>通用</model>
-    <manufacturer>Gimoos</manufacturer>
+    <manufacturer>Gimccs</manufacturer>
     <controlmethod>Serial,IP</controlmethod>
 
     <events>
@@ -402,7 +402,7 @@ def OnTimerExpird(timer_id):
         if check_online():
             C4.pub_update_property('在线状态', '在线')
         else:
-            C4.pub_update_property('在线状态', '离线')
+            C4.pub_update_property('在线状态', f'离线 ({C4.pub_str_time()})')
 
     if timer_id == reconnect_timer and C4.pub_get_PD('控制方式') == '网络':
         C4.pub_log('网络重连中...')

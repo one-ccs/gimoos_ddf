@@ -77,6 +77,38 @@ class _C4:
     def SetLogLevel(self, level: str = "INFO"):
         """设置日志级别 DEBUG, INFO, WARN, ERROR, FATAL, 默认为INFO"""
 
+    def SetHostSerialParameters(self, BindingID: int, SerialParameters: dict):
+        """
+        若设备对应的BindingID与主机串口绑定，则可设置主机对应的串口参数
+        SerialParameters格式为{"baud_rate": 9600, "data_bits": 8, "stop_bits": 1, "parity": 0}
+        baud_rate波特率取值为{110, 300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200}
+        data_bits数据位取值为{8}
+        stop_bits停止位取值为{1}
+        parity校验位取值为{0,1,2}分别标识[none,even,odd]
+        其中返回值只有当返回True才表示设置成功
+        """
+
+    def AddBindingConnection(self, idDevice1: int, idBinding1: int, idDevice2: int, idBinding2: int) -> bool:
+        """
+        添加两个设备之间的绑定连接
+        :param self:
+        :param idDevice1: 要连接的设备1的ID
+        :param idBinding1: 要连接的设备1的绑定ID
+        :param idDevice2: 要连接的设备2的ID
+        :param idBinding2: 要连接的设备2的绑定ID
+        :return: 连接成功返回True, 失败返回False
+        """
+
+    def AddDevice(self, device_file: str, parent_id: int, init_data: dict = None) -> int | None:
+        """
+        添加设备到项目树中
+        :param self:
+        :param device_file: 要添加的设备驱动文件名
+        :param parent_id: 要添加到的房间ID
+        :param init_data: 驱动OnInit函数传入的初始化数据，字典格式，会进行解包传入
+        :return: 添加成功返回设备DeviceID, 失败返回None
+        """
+
     # ---------------------- base64 ----------------------
 
     def Base64Decode(self, data: str) -> str:
@@ -310,6 +342,9 @@ class _C4:
     def pub_sleep(self: '_C4', seconds: float) -> None:
         """让当前线程休眠指定秒数"""
 
+    def pub_str_time(self: '_C4') -> str:
+        """获取当前时间字符串"""
+
     def pub_time(self: '_C4') -> float:
         """获取当前时间戳 (秒)"""
 
@@ -390,11 +425,11 @@ class _C4:
             str: 格式化后的 16 进制字符串。
         """
 
-    def pub_percent_hex(self: '_C4', percent: int) -> str:
+    def pub_percent_hex(self: '_C4', percent: int | float) -> str:
         """将百分比转换为 16 进制字符串形式"""
 
-    def pub_parse_percent_hex(self: '_C4', hex_str: str, base: int = 102) -> int:
-        """将 16 进制字符串形式的百分比转换为百分比形式"""
+    def pub_parse_percent_hex(self: '_C4', hex_str: str) -> float:
+        """将 16 进制字符串转换为百分比形式"""
 
     def pub_int_to_bin(self: '_C4', num: int, length: int = 8) -> str:
         """将整数转换为指定长度的2进制字符串形式
@@ -442,8 +477,11 @@ class _C4:
     def pub_fetch_post(self: '_C4', host, port, path, params = None, data = None, protocol='http', timeout = 3) -> object | None:
         """requests.post 封装"""
 
-    def pub_knx_create(self: '_C4', addr: tuple[str, int], rate_limit: int = 20) -> None:
+    def pub_knx_connect(self: '_C4', addr: tuple[str, int], rate_limit: int = 20) -> None:
         """创建 KNX 连接"""
+
+    def pub_knx_disconnect(self: '_C4') -> None:
+        """断开 KNX 连接"""
 
     def pub_knx_rate_limit(self: '_C4', rate_limit: int) -> None:
         """设置 KNX 报文队列的发送速率，单位毫秒"""
@@ -453,6 +491,9 @@ class _C4:
 
     def pub_knx_is_alive(self: '_C4') -> bool:
         """判断 KNX 连接是否存活"""
+
+    def pub_knx_check_addr(self: '_C4', addr: str):
+        """验证 KNX 地址是否合法"""
 
     def pub_create_connection(self: '_C4', type: str, host: str, *args) -> None:
         """建立指定连接

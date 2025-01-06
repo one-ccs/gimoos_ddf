@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
+from gimoos_ddf import __version__
 
 
 with open('README.md', 'r', encoding='utf-8') as f:
@@ -8,7 +9,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='gimoos_ddf',
-    version='0.3.10',
+    version=__version__,
     description='极墨思驱动开发框架',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',

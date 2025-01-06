@@ -9,7 +9,7 @@ def execute_from_command_line():
     from gimoos_ddf import DriverType
     from gimoos_ddf import logger
 
-    parser = argparse.ArgumentParser(prog='gimoos_ddf', description='Gimoos 驱动开发脚手架', add_help=False)
+    parser = argparse.ArgumentParser(prog='gimoos_ddf', description='Gimccs 驱动开发脚手架', add_help=False)
     subparsers = parser.add_subparsers(
         title='可选命令',
         dest='cmd',
