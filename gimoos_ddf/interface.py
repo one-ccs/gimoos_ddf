@@ -58,6 +58,15 @@ class _C4:
     def GetProxyDisplayName(self, ProxyID):
         """根据proxy_id获取设备显示名称"""
 
+    def ModifyProxyDisplayName(self, name: str, idBinding: int = None) -> bool:
+        """
+        修改设备显示名称。
+        :param self
+        :param name: 新的设备显示名称，不能为空且长度不能超过32个字符。
+        :param idBinding: 代理设备的绑定ID，如果未提供，则修改主设备的名称。
+        :return: 修改成功返回True，否则返回False。
+        """
+
     def GetDriverConfigInfo(self, key):
         """根据xml标签名称返回对应的xml标签内容"""
 
