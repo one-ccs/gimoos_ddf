@@ -1,10 +1,13 @@
 from typing_extensions import deprecated
-from typing import Any, Callable, Optional, Iterable, Mapping
+from typing import Any, Callable, Optional, Iterable, Mapping, TypeVar
 from enum import Enum
 from threading import Thread, Event
 from queue import SimpleQueue
 from xknx import XKNX
 import math
+
+
+T = TypeVar('T')
 
 
 class enumConnectionType(Enum):
@@ -330,7 +333,7 @@ class _C4:
     def pub_log(self: '_C4', message: str, level: int = 20) -> None:
         """打印日志"""
 
-    def pub_get_PD(self: '_C4', key: str, default=None) -> Any:
+    def pub_get_PD(self: '_C4', key: str, default: Optional[T] = None) -> Optional[T]:
         """获取持久化数据"""
 
     def pub_set_PD(self: '_C4', key: str, value) -> None:

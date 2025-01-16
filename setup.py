@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
-from gimoos_ddf import __version__
+from pathlib import Path
 
-
-with open('README.md', 'r', encoding='utf-8') as f:
-    LONG_DESCRIPTION = f.read()
 
 setup(
     name='gimoos_ddf',
-    version=__version__,
+    version='0.3.12',
     description='极墨思驱动开发框架',
-    long_description=LONG_DESCRIPTION,
+    long_description=Path('README.md').read_text('utf-8'),
     long_description_content_type='text/markdown',
     author='one-ccs',
     author_email='one-ccs@foxmail.com',

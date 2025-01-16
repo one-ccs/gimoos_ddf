@@ -415,8 +415,6 @@ def OnInit(**kwargs):
     \"""设备初始化事件\"""
     global online_timer, reconnect_timer
 
-    C4.pub_init(PersistData, **kwargs)
-
     online_timer = C4.pub_set_interval(5 * 60)
     reconnect_timer = C4.pub_set_interval(60 * 60)
 
