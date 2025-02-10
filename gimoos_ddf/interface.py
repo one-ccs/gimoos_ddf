@@ -421,6 +421,9 @@ class _C4:
     def pub_make_jsonrpc(self: '_C4', method: str, params: dict | None = None, version: str = '2.0') -> str:
         """生成 jsonrpc 格式的请求数据"""
 
+    def pub_table_dumps(self: '_C4', table: list[dict[str, Any]]) -> str:
+        """将字典列表转换为表格字符串"""
+
     def pub_json_dumps(self: '_C4', data: dict, indent: int = 4) -> str:
         """将字典数据转换为 json 格式"""
 

@@ -3,10 +3,12 @@
 from setuptools import setup, find_packages
 from pathlib import Path
 
+from gimoos_ddf import __version__
+
 
 setup(
     name='gimoos_ddf',
-    version='0.3.12',
+    version=__version__,
     description='极墨思驱动开发框架',
     long_description=Path('README.md').read_text('utf-8'),
     long_description_content_type='text/markdown',

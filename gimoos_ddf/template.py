@@ -313,13 +313,13 @@ def preprocess(str_command, t_params={}) -> str:
             return str_command
 
 
-@C4.pub_func_log(log_level=10)
+@C4.pub_func_log(log_level=C4.DEBUG)
 def received_from_serial(data: str):
     pass
 
 
 @C4.pub_func_catch()
-@C4.pub_func_log(log_level=10)
+@C4.pub_func_log(log_level=C4.DEBUG)
 def ReceivedFromNetwork(BindID, Port, Data):
     \"""接收网络数据\"""
     global last_data_in
@@ -328,7 +328,7 @@ def ReceivedFromNetwork(BindID, Port, Data):
 
 
 @C4.pub_func_catch()
-@C4.pub_func_log(log_level=10)
+@C4.pub_func_log(log_level=C4.DEBUG)
 def ReceivedFromProxy(id_binding, str_command, t_params):
     \"""接收 Proxy 消息\"""
     if str_command == 'ReceivedFromSerial':
@@ -341,7 +341,7 @@ def ReceivedFromProxy(id_binding, str_command, t_params):
 
 
 @C4.pub_func_catch()
-@C4.pub_func_log(log_level=1)
+@C4.pub_func_log(log_level=C4.DEBUG)
 def ReceivedFromScene(bindingId, sceneId, command, params):
     \"""场景变化\"""
     match command:
