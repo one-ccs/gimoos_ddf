@@ -429,6 +429,6 @@ def OnInit(**kwargs):
 
 
 @C4.pub_func_catch()
-def OnDestroy():
+def OnDestroy(event: str):
     \"""设备删除事件\"""
 """

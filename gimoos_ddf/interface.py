@@ -23,6 +23,7 @@ class _C4:
     INFO    = 20
     DEBUG   = 10
     NOTSET  = 0
+    class BreakException(Exception): ...
 
     PersistData: dict[str, Any]
     pub_log_level: int
@@ -119,6 +120,14 @@ class _C4:
         :param parent_id: 要添加到的房间ID
         :param init_data: 驱动OnInit函数传入的初始化数据，字典格式，会进行解包传入
         :return: 添加成功返回设备DeviceID, 失败返回None
+        """
+
+    def DelDevice(self, proxy_ids: list) -> bool:
+        """
+        从项目树中删除设备
+        :param self:
+        :param proxy_ids: 要删除的设备代理ID列表
+        :return: 成功返回True, 失败返回False
         """
 
     # ---------------------- base64 ----------------------
