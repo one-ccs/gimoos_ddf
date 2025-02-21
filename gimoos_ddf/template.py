@@ -273,9 +273,7 @@ def check_online():
 
 def send_to_proxy(cmd: str, params: dict):
     if not (key_data := KEYS_DATA.get(C4.pub_get_PD('控制方式', '串口'), {}).get(cmd)):
-        C4.pub_log(f'未知命令: {cmd}', C4.DEBUG)
-        return
-
+        raise C4.BreakException(f'未知命令: {cmd}', C4.DEBUG)
     if C4.pub_get_PD('控制方式', '串口') == '串口':
         C4.pub_send_to_serial(key_data)
     else:
@@ -292,8 +290,7 @@ def send_to_proxy(cmd: str, params: dict):
                 times -= 1
                 C4.pub_sleep(5)
             if times == 0:
-                C4.pub_log('网络唤醒失败')
-                return
+                raise C4.BreakException('网络唤醒失败')
             else:
                 C4.pub_log('网络唤醒成功')
                 C4.pub_update_property('在线状态', '在线')
