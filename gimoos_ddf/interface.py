@@ -360,6 +360,9 @@ class _C4:
     def pub_show_property(self: '_C4', property: str) -> None:
         """显示属性"""
 
+    def pub_uuid() -> str:
+        """获取随机 uuid"""
+
     def pub_sleep(self: '_C4', seconds: float) -> None:
         """让当前线程休眠指定秒数"""
 
@@ -432,6 +435,9 @@ class _C4:
 
     def pub_table_dumps(self: '_C4', table: list[dict[str, Any]]) -> str:
         """将字典列表转换为表格字符串"""
+
+    def pub_json_loads(self: '_C4', s: str | bytes | bytearray) -> dict:
+        """将 json 格式的字符串转换为字典"""
 
     def pub_json_dumps(self: '_C4', data: dict, indent: int = 4) -> str:
         """将字典数据转换为 json 格式"""
@@ -563,7 +569,7 @@ class _C4:
     def pub_send_to_slave(self: '_C4', command: str, params: dict | str, channel: int | str = '4000') -> None:
         """向从控设备发送消息，channel 为 str 时，向所有从机发送"""
 
-    def pub_WOL(self: '_C4', mac: str, channel: int = 3999) -> bool:
+    def pub_WOL(self: '_C4', mac: str, channel: int = 3999):
         """发送 WOL 包，实现网络唤醒"""
 
     def __pub_delay_thread(self: '_C4') -> None:

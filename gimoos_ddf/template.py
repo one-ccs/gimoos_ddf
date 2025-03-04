@@ -25,7 +25,7 @@ TEMPLATE_XML = """<devicedata>
                 <readonly>true</readonly>
             </property>
             <property>
-                <name>在线状态</name>
+                <name>驱动状态</name>
                 <type>STRING</type>
                 <default>未知</default>
                 <readonly>true</readonly>
@@ -278,8 +278,7 @@ def send_to_proxy(cmd: str, params: dict):
         C4.pub_send_to_serial(key_data)
     else:
         if cmd == 'ON':
-            if not C4.pub_WOL(C4.pub_get_PD('MAC地址')):
-                return
+            C4.pub_WOL(C4.pub_get_PD('MAC地址'))
 
             times = 5
             while times:
@@ -293,7 +292,7 @@ def send_to_proxy(cmd: str, params: dict):
                 raise C4.BreakException('网络唤醒失败')
             else:
                 C4.pub_log('网络唤醒成功')
-                C4.pub_update_property('在线状态', '在线')
+                C4.pub_update_property('驱动状态', '在线')
         else:
             C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('OnKeyEvent', key_data))
     C4.pub_send_to_internal(cmd, params)
@@ -359,6 +358,16 @@ def ExecuteCommand(str_command, t_params):
 
 
 @C4.pub_func_catch()
+def OnConnectionStatusChanged(BindID, Port, Status):
+    if Status == 'ONLINE':
+        C4.pub_update_property('驱动状态', '在线')
+    elif Status == 'CONNECT_FAIL':
+        C4.pub_update_property('驱动状态', '连接失败')
+    else:
+        C4.pub_update_property('驱动状态', f'离线 ({C4.pub_str_time()})')
+
+
+@C4.pub_func_catch()
 def OnPropertyChanged(key: str, value: str):
     \"""属性改变事件\"""
     C4.pub_set_PD(key, value)
@@ -366,16 +375,15 @@ def OnPropertyChanged(key: str, value: str):
     match key:
         case '控制方式':
             if value == '网络':
-                C4.pub_show_property('在线状态')
+                C4.pub_show_property('驱动状态')
                 C4.pub_show_property('网络地址')
                 C4.pub_show_property('网络端口')
                 C4.UpdateProperty('网络地址', C4.pub_get_PD('网络地址'))
             else:
-                C4.pub_hide_property('在线状态')
+                C4.pub_hide_property('驱动状态')
                 C4.pub_hide_property('网络地址')
                 C4.pub_hide_property('网络端口')
-        case '日志级别':
-            C4.pub_set_log_level(value)
+
 
     if key in {'控制方式', '网络地址'} and C4.pub_get_PD('网络地址'):
         C4.pub_destroy_connection('TS', TS_PORT, TS_CHANNEL)
@@ -397,9 +405,9 @@ def OnTimerExpird(timer_id):
     \"""定时器事件\"""
     if timer_id == online_timer and C4.pub_get_PD('控制方式') == '网络' and C4.pub_get_PD('网络地址'):
         if check_online():
-            C4.pub_update_property('在线状态', '在线')
+            C4.pub_update_property('驱动状态', '在线')
         else:
-            C4.pub_update_property('在线状态', f'离线 ({C4.pub_str_time()})')
+            C4.pub_update_property('驱动状态', f'离线 ({C4.pub_str_time()})')
 
     if timer_id == reconnect_timer and C4.pub_get_PD('控制方式') == '网络':
         C4.pub_log('网络重连中...')
