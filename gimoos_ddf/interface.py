@@ -122,6 +122,15 @@ class _C4:
         :return: 添加成功返回设备DeviceID, 失败返回None
         """
 
+    def AddRoom(self, name: str, parent_id: int) -> int | None:
+        """
+        添加房间到项目树中(若同楼层已有同名房间，则会直接返回该房间的ID)
+        :param self:
+        :param name: 房间名称
+        :param parent_id: 父节点楼层id
+        :return: 添加成功返回房间DeviceID, 失败返回None
+        """
+
     def DelDevice(self, proxy_ids: list) -> bool:
         """
         从项目树中删除设备
