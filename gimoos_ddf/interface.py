@@ -1,10 +1,12 @@
-from typing_extensions import deprecated
 from typing import Any, Callable, Optional, Iterable, Mapping, TypeVar
 from enum import Enum
 from threading import Thread, Event
 from queue import SimpleQueue
-from xknx import XKNX
 import math
+
+from typing_extensions import deprecated
+from xknx import XKNX
+import requests
 
 
 T = TypeVar('T')
@@ -510,10 +512,10 @@ class _C4:
     def pub_dict_to_xml(self: '_C4', data: dict, root_name: str | None = None, encoding: str = 'unicode') -> str:
         """将字典数据转换为xml格式"""
 
-    def pub_fetch_get(self: '_C4', host, port, path, params = None, protocol = 'http', timeout = 3) -> object | None:
+    def pub_fetch_get(self: '_C4', host, port, path, params = None, protocol = 'http', timeout = 3) -> requests.Response | None:
         """requests.get 封装"""
 
-    def pub_fetch_post(self: '_C4', host, port, path, params = None, data = None, protocol='http', timeout = 3) -> object | None:
+    def pub_fetch_post(self: '_C4', host, port, path, params = None, data = None, protocol='http', timeout = 3) -> requests.Response | None:
         """requests.post 封装"""
 
     def pub_knx_connect(self: '_C4', addr: tuple[str, int], rate_limit: int = 20) -> None:
