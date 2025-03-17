@@ -129,7 +129,7 @@ class DriverUpdater():
                     logger.error(f'登录失败，状态码：{response.status}')
 
     async def _upload_file(self, path: Path, new_hash: dict) -> bool:
-        zip_file = self.temp_path / f'{path.name}.zip'
+        zip_file = self.temp_path / f'{path.name}.gms'
 
         if not new_hash.get('upload_only'):
             # 增加驱动版本
@@ -170,7 +170,7 @@ class DriverUpdater():
         with open(zip_file, 'rb') as f:
             data = FormData(quote_fields=False, charset=self.encoding)
             data.add_field('param', '{"project":"items","type":"im-function","id":"upload_driver","param":{}}', content_type='application/json')
-            data.add_field('file', f, filename=f'{path.name}.zip', content_type='application/zip')
+            data.add_field('file', f, filename=f'{path.name}.gms', content_type='application/zip')
 
             headers = {'Authorization': f'Basic {self.token}',}
 
