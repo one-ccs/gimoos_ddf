@@ -580,7 +580,10 @@ class _C4:
     def pub_send_to_slave(self: '_C4', command: str, params: dict | str, channel: int | str = '4000') -> None:
         """向从控设备发送消息，channel 为 str 时，向所有从机发送"""
 
-    def pub_WOL(self: '_C4', mac: str, channel: int = 3999):
+    def pub_broadcast(self: '_C4', message: bytes, port: int | None = None, channel: int = 3999):
+        """发送广播数据"""
+
+    def pub_WOL(self: '_C4', mac: str):
         """发送 WOL 包，实现网络唤醒"""
 
     def __pub_delay_thread(self: '_C4') -> None:
