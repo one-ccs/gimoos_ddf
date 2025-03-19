@@ -580,6 +580,9 @@ class _C4:
     def pub_send_to_slave(self: '_C4', command: str, params: dict | str, channel: int | str = '4000') -> None:
         """向从控设备发送消息，channel 为 str 时，向所有从机发送"""
 
+    def pub_get_broadcast_ip(self: '_C4') -> str:
+        """获取广播地址"""
+
     def pub_broadcast(self: '_C4', message: bytes, port: int | None = None, channel: int = 3999):
         """发送广播数据"""
 

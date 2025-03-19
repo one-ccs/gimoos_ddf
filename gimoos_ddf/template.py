@@ -265,10 +265,25 @@ def getSerialParameters(input_binding_id):
     return {"baud_rate": 9600, "data_bits": 8, "stop_bits": 1, "parity": 0}
 
 
+def change_state(state: str):
+    if C4.pub_get_PD('驱动状态', '').startswith(state): return
+    if state.startswith('离线'):
+        state = f'离线 ({C4.pub_str_time()})'
+    C4.pub_update_property('驱动状态', state)
+
+
 def check_online():
     C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('General.Ping'))
     C4.pub_sleep(3)
     return C4.pub_pass_time(last_data_in) <= 3
+
+
+def connection():
+    if not C4.pub_get_PD('网络地址'): return
+    if (_ := C4.pub_get_PD('控制方式')) and _ != '网络': return C4.pub_destroy_connection('TS', TS_PORT, TS_CHANNEL)
+    change_state('未知')
+    C4.pub_destroy_connection('TS', TS_PORT, TS_CHANNEL)
+    C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
 
 
 def send_to_proxy(cmd: str, params: dict):
@@ -292,7 +307,7 @@ def send_to_proxy(cmd: str, params: dict):
                 raise C4.BreakException('网络唤醒失败')
             else:
                 C4.pub_log('网络唤醒成功')
-                C4.pub_update_property('驱动状态', '在线')
+                change_state('在线')
         else:
             C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('OnKeyEvent', key_data))
     C4.pub_send_to_internal(cmd, params)
@@ -360,11 +375,11 @@ def ExecuteCommand(str_command, t_params):
 @C4.pub_func_catch()
 def OnConnectionStatusChanged(BindID, Port, Status):
     if Status == 'ONLINE':
-        C4.pub_update_property('驱动状态', '在线')
+        change_state('在线')
     elif Status == 'CONNECT_FAIL':
-        C4.pub_update_property('驱动状态', '连接失败')
+        change_state('连接失败')
     else:
-        C4.pub_update_property('驱动状态', f'离线 ({C4.pub_str_time()})')
+        change_state('离线')
 
 
 @C4.pub_func_catch()
@@ -383,14 +398,9 @@ def OnPropertyChanged(key: str, value: str):
                 C4.pub_hide_property('驱动状态')
                 C4.pub_hide_property('网络地址')
                 C4.pub_hide_property('网络端口')
-
-
-    if key in {'控制方式', '网络地址'} and C4.pub_get_PD('网络地址'):
-        C4.pub_destroy_connection('TS', TS_PORT, TS_CHANNEL)
-
-        if C4.pub_get_PD('控制方式') == '网络':
-            C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
-            OnTimerExpird(online_timer)
+            connection()
+        case '网络地址':
+            connection()
 
     C4.pub_save_PD()
 
@@ -405,14 +415,13 @@ def OnTimerExpird(timer_id):
     \"""定时器事件\"""
     if timer_id == online_timer and C4.pub_get_PD('控制方式') == '网络' and C4.pub_get_PD('网络地址'):
         if check_online():
-            C4.pub_update_property('驱动状态', '在线')
+            change_state('在线')
         else:
-            C4.pub_update_property('驱动状态', f'离线 ({C4.pub_str_time()})')
+            change_state('离线')
 
     if timer_id == reconnect_timer and C4.pub_get_PD('控制方式') == '网络':
         C4.pub_log('网络重连中...')
-        C4.pub_destroy_connection('TS', TS_PORT, TS_CHANNEL)
-        C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
+        connection()
 
 
 @C4.pub_func_catch()
@@ -423,14 +432,9 @@ def OnInit(**kwargs):
     online_timer = C4.pub_set_interval(5 * 60)
     reconnect_timer = C4.pub_set_interval(60 * 60)
 
-    if 'ip' in kwargs and C4.pub_get_PD('控制方式', '网络') == '网络':
-        C4.pub_log(f'初始化控制方式为网络: {kwargs["ip"]}', C4.DEBUG)
+    if 'ip' in kwargs or C4.pub_get_PD('控制方式') == '网络':
         C4.pub_update_property('控制方式', '网络')
         OnPropertyChanged('控制方式', '网络')
-    else:
-        _ = C4.pub_get_PD('控制方式', '串口')
-        C4.pub_log(f'初始化控制方式为 "{_}"', C4.DEBUG)
-        OnPropertyChanged('控制方式', _)
 
 
 @C4.pub_func_catch()
