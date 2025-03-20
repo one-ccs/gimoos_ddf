@@ -1,6 +1,6 @@
 from typing import Any, Callable, Optional, Iterable, Mapping, TypeVar
 from enum import Enum
-from threading import Thread, Event
+from threading import Thread, Event, Timer
 from queue import SimpleQueue
 import math
 
@@ -35,7 +35,7 @@ class _C4:
     pub_jsonrpc_id: int
     pub_tasks: dict[int, tuple[Thread, Event]]
     pub_xknx: XKNX | None
-
+    pub_connections: dict[int, tuple[str, str, int, str]]
 
     # ---------------------- base ----------------------
 
@@ -392,7 +392,7 @@ class _C4:
     def pub_clear_interval(self: '_C4', timer_id: int) -> None:
         """清除一个定时器"""
 
-    def pub_set_timeout(self: '_C4', interval: float, function: 'function', *args, **kwargs) -> object:
+    def pub_set_timeout(self: '_C4', interval: float, function: Callable, *args, **kwargs) -> Timer:
         """定时 n 秒后执行函数"""
 
     def pub_execute_task(
@@ -562,10 +562,10 @@ class _C4:
     def pub_send_to_serial(self: '_C4', hex_data: str | list, interval: float = 0.1, is_hex: bool = False, channel: int = 3001) -> None:
         """发送串口数据，格式：{ hex_data: str, interval: float }"""
 
-    def pub_send_to_network(self: '_C4', channel: int, port: int, message = 'OK...') -> None:
-        """向对应端口发送网络数据"""
+    def pub_send_to_network(self: '_C4', channel: int, port: int, message: str, retry: int = 3, interval: float = 3) -> bool:
+        """向对应端口发送网络数据，若 TCP 发送失败，则重试指定次数"""
 
-    def pub_send_to_multicast(self: '_C4', channel: int, port: int, message = 'OK...') -> None:
+    def pub_send_to_multicast(self: '_C4', channel: int, port: int, message: str) -> None:
         """向对应端口发送多播数据"""
 
     def pub_send_to_internal(self: '_C4', command: str, params: dict, channel: int = 5001) -> None:
@@ -592,7 +592,7 @@ class _C4:
     def __pub_delay_thread(self: '_C4') -> None:
         """延时命令发送线程"""
 
-    def pub_delay_send(self: '_C4', cmd: str, params: dict, send_to_proxy: 'function', delay_map: dict[str, int] = {}) -> None:
+    def pub_delay_send(self: '_C4', cmd: str, params: dict, send_to_proxy: Callable, delay_map: dict[str, int] = {}) -> None:
         """延时发送数据
 
         Args:
@@ -602,7 +602,7 @@ class _C4:
             send_to_proxy (_type_): 回调函数，参数：cmd, params
         """
 
-    def pub_longdown_delay_send(self: '_C4', cmd: str, params: dict, send_to_proxy: 'function', delay_map: dict[str, int] = {}, interval: float = 0.2) -> None:
+    def pub_longdown_delay_send(self: '_C4', cmd: str, params: dict, send_to_proxy: Callable, delay_map: dict[str, int] = {}, interval: float = 0.2) -> None:
         """在延时发送的基础上增加长按的处理"""
 
     def pub_mute_switch(self: '_C4', cmd: str) -> str | None:

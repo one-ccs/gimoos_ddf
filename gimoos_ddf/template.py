@@ -199,6 +199,10 @@ KEYS_DATA = {
         "SKIP_REV":         "",
         "SKIP_FWD":         "",
 
+        "INPUT_200":        "",
+        "INPUT_201":        "",
+        "INPUT_202":        "",
+
         "*":                "",
         "#":                "",
         "-":                "",
@@ -241,6 +245,10 @@ KEYS_DATA = {
         "QUICK_RETREAT":    "",
         "SKIP_REV":         "",
         "SKIP_FWD":         "",
+
+        "INPUT_200":        "",
+        "INPUT_201":        "",
+        "INPUT_202":        "",
 
         "*":                "",
         "#":                "",
@@ -309,19 +317,21 @@ def send_to_proxy(cmd: str, params: dict):
                 C4.pub_log('网络唤醒成功')
                 change_state('在线')
         else:
-            C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('OnKeyEvent', key_data))
+            if not C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('OnKeyEvent', key_data)): return
     C4.pub_send_to_internal(cmd, params)
 
 
 def preprocess(str_command, t_params={}) -> str:
-    if cmd := C4.pub_mute_toggle(str_command):
-        return cmd
+    if _ := C4.pub_mute_toggle(str_command):
+        return _
 
-    match str_command:
-        case 'SET_INPUT':
-            return f'INPUT_{t_params["INPUT"]}'
-        case _:
-            return str_command
+    elif str_command == 'SET_INPUT':
+        info['input'] = t_params['INPUT']
+        C4.pub_set_PD('_info', info)
+        C4.pub_save_PD()
+        return f'INPUT_{t_params["INPUT"]}'
+
+    return str_command
 
 
 @C4.pub_func_log(log_level=C4.DEBUG)
@@ -427,14 +437,18 @@ def OnTimerExpird(timer_id):
 @C4.pub_func_catch()
 def OnInit(**kwargs):
     \"""设备初始化事件\"""
-    global online_timer, reconnect_timer
+    global info, online_timer, reconnect_timer
 
-    online_timer = C4.pub_set_interval(5 * 60)
+    info = C4.pub_get_PD('_info', info)
+    online_timer = C4.pub_set_interval(1 * 60)
     reconnect_timer = C4.pub_set_interval(60 * 60)
 
+    C4.SetDriverState(DEVICE_ID, 'INPUT', info['input'])
     if 'ip' in kwargs or C4.pub_get_PD('控制方式') == '网络':
         C4.pub_update_property('控制方式', '网络')
         OnPropertyChanged('控制方式', '网络')
+    else:
+        OnPropertyChanged('控制方式', '串口')
 
 
 @C4.pub_func_catch()
