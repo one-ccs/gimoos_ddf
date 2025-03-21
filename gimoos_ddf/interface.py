@@ -141,6 +141,15 @@ class _C4:
         :return: 成功返回True, 失败返回False
         """
 
+    def HiddenDevice(self, room_id: int, proxy_id: int) -> None:
+        """
+        在房间中隐藏设备
+        :param self:
+        :param room_id: 房间ID
+        :param proxy_id: 要隐藏的设备代理ID
+        :return:
+        """
+
     # ---------------------- base64 ----------------------
 
     def Base64Decode(self, data: str) -> str:

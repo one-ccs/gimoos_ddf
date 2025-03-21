@@ -326,9 +326,6 @@ def preprocess(str_command, t_params={}) -> str:
         return _
 
     elif str_command == 'SET_INPUT':
-        info['input'] = t_params['INPUT']
-        C4.pub_set_PD('_info', info)
-        C4.pub_save_PD()
         return f'INPUT_{t_params["INPUT"]}'
 
     return str_command
@@ -437,13 +434,11 @@ def OnTimerExpird(timer_id):
 @C4.pub_func_catch()
 def OnInit(**kwargs):
     \"""设备初始化事件\"""
-    global info, online_timer, reconnect_timer
+    global online_timer, reconnect_timer
 
-    info = C4.pub_get_PD('_info', info)
     online_timer = C4.pub_set_interval(1 * 60)
     reconnect_timer = C4.pub_set_interval(60 * 60)
 
-    C4.SetDriverState(DEVICE_ID, 'INPUT', info['input'])
     if 'ip' in kwargs or C4.pub_get_PD('控制方式') == '网络':
         C4.pub_update_property('控制方式', '网络')
         OnPropertyChanged('控制方式', '网络')
