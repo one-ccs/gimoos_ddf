@@ -450,16 +450,16 @@ class _C4:
             int: 计算得到的 CRC-16-MODBUS 校验值。
         """
 
-    def pub_RC4(self: '_C4', key: bytes, data: str | bytes, encoding: str = 'utf-8') -> str | bytes:
+    def pub_RC4(self: '_C4', key: str | bytes, data: str | bytes, encoding: str = 'utf-8') -> bytes:
         """使用 RC4 算法加密或解密数据
 
         Args:
-            key (bytes): 秘钥
+            key (str | bytes): 秘钥
             data (str | bytes): 数据
             encoding (str, optional): 编码. 默认为 'utf-8'.
 
         Returns:
-            str | bytes: 加密或解密后的结果
+            bytes: 加密或解密后的结果
         """
 
     def pub_make_jsonrpc(self: '_C4', method: str, params: dict | None = None, version: str = '2.0') -> str:
