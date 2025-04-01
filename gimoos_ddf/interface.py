@@ -404,6 +404,22 @@ class _C4:
     def pub_set_timeout(self: '_C4', interval: float, function: Callable, *args, **kwargs) -> Timer:
         """定时 n 秒后执行函数"""
 
+    def pub_retry(self: '_C4', target: Callable, args: tuple = (), kwargs: dict | None = None, *, condition: Callable, max_retry: int = 3, timeout: float = 3, interval: float = 0.1):
+        """重试执行函数，直到满足条件或达到最大重试次数
+
+        Args:
+            target (Callable): 要执行的函数
+            args (tuple, optional): 位置参数. 默认为 ().
+            kwargs (dict, optional): 关键字参数. 默认为 None.
+            condition (Callable): 条件函数，返回 True 则停止重试.
+            max_retry (int, optional): 最大重试次数. 默认为 3 秒.
+            timeout (float, optional): 超时时间. 默认为 3 秒.
+            interval (float, optional): 条件检查间隔. 默认为 0.1 秒.
+
+        Returns:
+            bool: 成功或失败
+        """
+
     def pub_execute_task(
         self: '_C4',
         target: Callable[[Event], None],
