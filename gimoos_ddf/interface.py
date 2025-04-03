@@ -330,10 +330,10 @@ class _C4:
 
     # ---------------------- driver_public ----------------------
 
-    def pub_func_log(self: '_C4', log_level = 20):
+    def pub_func_log(self: '_C4', log_level = 20) -> Callable:
         """装饰器，打印函数调用日志"""
 
-    def pub_func_catch(self: '_C4', is_raise = False, on_except = None):
+    def pub_func_catch(self: '_C4', is_raise = False, on_except = None) -> Callable:
         """装饰器，捕获函数异常并打印日志
 
         注：请在 pub_init 之后调用，否则无法捕获异常。
@@ -346,7 +346,7 @@ class _C4:
             function: 装饰器函数。
         """
 
-    def pub_func_hook(self: '_C4', hook):
+    def pub_func_hook(self: '_C4', hook) -> Callable:
         """装饰器，在函数调用前后执行 hook 函数
 
         Args:
