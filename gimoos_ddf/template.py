@@ -303,7 +303,7 @@ def send_to_proxy(cmd: str, params: dict):
         if cmd == 'ON':
             C4.pub_WOL(C4.pub_get_PD('MAC地址'))
 
-            times = 5
+            times = 12
             while times:
                 C4.pub_log('等待设备开机...')
                 C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
