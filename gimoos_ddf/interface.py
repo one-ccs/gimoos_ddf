@@ -1,6 +1,6 @@
 from typing import Any, Callable, Optional, Iterable, Mapping, TypeVar
 from enum import Enum
-from threading import Thread, Event, Timer
+from threading import Thread, Event, Timer, Lock
 from queue import SimpleQueue
 import math
 
@@ -36,6 +36,7 @@ class _C4:
     pub_tasks: dict[int, tuple[Thread, Event]]
     pub_xknx: XKNX | None
     pub_connections: dict[int, tuple[str, str, int, str]]
+    pub_locks: dict[str, Lock]
 
     # ---------------------- base ----------------------
 
@@ -444,6 +445,16 @@ class _C4:
 
         Args:
             task_id (int): 任务 id
+        """
+
+    def pub_get_lock(self: '_C4', lock_name: str = 'default_lock') -> Lock:
+        """获取一个线程锁，若没有则创建
+
+        Args:
+            lock_name (str): 锁名称, 默认为 'default_lock'
+
+        Returns:
+            Lock: 线程锁对象
         """
 
     def pub_crc16_xmodem(self: '_C4', data: bytes, polynomial = 0x1021) -> int:
