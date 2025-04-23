@@ -281,7 +281,7 @@ def change_state(state: str):
 
 
 def check_online():
-    C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('General.Ping'))
+    C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc(method='General.Ping'))
     C4.pub_sleep(3)
     return C4.pub_pass_time(last_data_in) <= 3
 
@@ -317,7 +317,7 @@ def send_to_proxy(cmd: str, params: dict):
                 C4.pub_log('网络唤醒成功')
                 change_state('在线')
         else:
-            if not C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('OnKeyEvent', key_data)): return
+            if not C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc(method='OnKeyEvent', params=key_data)): return
     C4.pub_send_to_internal(cmd, params)
 
 
@@ -376,7 +376,7 @@ def ExecuteCommand(str_command, t_params):
     \"""处理命令\"""
     match str_command:
         case 'StartUpdate':
-            C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc('StartUpdate'))
+            C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc(method='StartUpdate'))
 
 
 @C4.pub_func_catch()

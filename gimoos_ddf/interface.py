@@ -478,8 +478,8 @@ class _C4:
             bytes: 加密或解密后的结果
         """
 
-    def pub_make_jsonrpc(self: '_C4', method: str, params: dict | str | None = None, *, name: str = 'jsonrpc', version: str = '2.0') -> str:
-        """生成 jsonrpc 格式的请求数据"""
+    def pub_make_jsonrpc(self: '_C4', **kw) -> str:
+        """生成 jsonrpc 格式的请求数据，自动添加 id"""
 
     def pub_table_dumps(self: '_C4', table: list[dict[str, Any]]) -> str:
         """将字典列表转换为表格字符串"""
