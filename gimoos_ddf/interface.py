@@ -27,17 +27,6 @@ class _C4:
     NOTSET  = 0
     class BreakException(Exception): ...
 
-    PersistData: dict[str, Any]
-    pub_log_level: int
-    pub_is_longdown: bool
-    pub_delay_thread: Thread | None
-    pub_delay_queue: SimpleQueue[tuple[str, dict, int, Callable[[str, dict], None]]]
-    pub_jsonrpc_id: int
-    pub_tasks: dict[int, tuple[Thread, Event]]
-    pub_xknx: XKNX | None
-    pub_connections: dict[int, tuple[str, str, int, str]]
-    pub_locks: dict[str, Lock]
-
     # ---------------------- base ----------------------
 
     def SetPropertyAttribs(self, key, hidden: bool):
@@ -660,5 +649,5 @@ class _C4:
         """处理静音切换的情况"""
 
 
-C4 = _C4()
-PersistData: dict[str, Any] = {}
+C4: _C4 = ...
+PersistData: dict[str, Any] = ...

@@ -9,7 +9,7 @@ from .management import execute_from_command_line as execute_from_command_line
 from .create import DriverType as DriverType
 
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 
 __all__ = [
     '_C4',

@@ -418,7 +418,7 @@ def OnBindingChanged(binding_id, connection_event, other_device_id, other_bindin
 
 
 @C4.pub_func_catch()
-def OnTimerExpird(timer_id):
+def OnTimerExpired(timer_id):
     \"""定时器事件\"""
     if timer_id == online_timer and C4.pub_get_PD('控制方式') == '网络' and C4.pub_get_PD('网络地址'):
         if check_online():
