@@ -275,6 +275,7 @@ def getSerialParameters(input_binding_id):
 
 def change_state(state: str):
     if C4.pub_get_PD('驱动状态', '').startswith(state): return
+    if C4.pub_get_PD('驱动状态', '').startswith('离线') and state != '在线': return
     if state.startswith('离线'):
         state = f'离线 ({C4.pub_str_time()})'
     C4.pub_update_property('驱动状态', state)
@@ -384,7 +385,7 @@ def OnConnectionStatusChanged(BindID, Port, Status):
     if Status == 'ONLINE':
         change_state('在线')
     elif Status == 'CONNECT_FAIL':
-        change_state('连接失败')
+        C4.pub_log('网络连接失败，请检查网络设置')
     else:
         change_state('离线')
 
