@@ -394,6 +394,9 @@ class _C4:
     def pub_set_timeout(self: '_C4', interval: float, function: Callable, *args, **kwargs) -> Timer:
         """定时 n 秒后执行函数"""
 
+    def pub_clear_timeout(self: '_C4', timer: Timer) -> None:
+        """清除一个定时器"""
+
     def pub_retry(self: '_C4', target: Callable, args: tuple = (), kwargs: dict | None = None, *, condition: Callable, max_retry: int = 3, timeout: float = 3, interval: float = 0.1):
         """重试执行函数，直到满足条件或达到最大重试次数
 
