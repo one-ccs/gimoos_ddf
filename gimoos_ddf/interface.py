@@ -512,6 +512,9 @@ class _C4:
     def pub_parse_percent_hex(self: '_C4', hex_str: str) -> float:
         """将 16 进制字符串转换为百分比形式"""
 
+    def pub_int_key(self: '_C4', data: dict):
+        """将字典的 key 转换为整数"""
+
     def pub_int_to_bin(self: '_C4', num: int, length: int = 8) -> str:
         """将整数转换为指定长度的2进制字符串形式
 
