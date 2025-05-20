@@ -632,21 +632,20 @@ class _C4:
     def pub_WOL(self: '_C4', mac: str):
         """发送 WOL 包，实现网络唤醒"""
 
-    def __pub_delay_thread(self: '_C4') -> None:
-        """延时命令发送线程"""
-
-    def pub_delay_send(self: '_C4', cmd: str, params: dict, send_to_proxy: Callable, delay_map: dict[str, int] = {}) -> None:
-        """延时发送数据
+    def pub_task(self: '_C4', target: Callable, args: tuple | None = None, kwargs: dict | None = None, *, delay_before: float = 0, delay_after: float = 0, group: str = 'default') -> None:
+        """创建后台任务
 
         Args:
-            delay_map (dict): 延时字典 { cmd: delay } 单位毫秒, "__all__" 设置所有命令的延时
-            cmd (str): 命令
-            params (dict): 参数
-            send_to_proxy (_type_): 回调函数，参数：cmd, params
+            target (Callable): 任务函数
+            args (tuple | None, optional): 任务参数. 默认为 None.
+            kwargs (dict | None, optional): 任务关键字参数. 默认为 None.
+            delay_before (float, optional): 任务前延时, 单位毫秒. 默认为 0.
+            delay_after (float, optional): 任务后延时, 单位毫秒. 默认为 0.
+            group (str, optional): 任务分组. 默认为 'default'.
         """
 
-    def pub_longdown_delay_send(self: '_C4', cmd: str, params: dict, send_to_proxy: Callable, delay_map: dict[str, int] = {}, interval: float = 0.2) -> None:
-        """在延时发送的基础上增加长按的处理"""
+    def pub_longdown_task(self: '_C4', send_to_proxy: Callable, cmd: str, params: dict, delay: float, interval: float = 0.5) -> None:
+        """创建长按任务"""
 
     def pub_mute_switch(self: '_C4', cmd: str) -> str | None:
         """处理静音开关的情况"""
