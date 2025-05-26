@@ -140,6 +140,15 @@ class _C4:
         :return:
         """
 
+    def SetDeviceType(self, binding_id: int, device_type: str) -> bool:
+        """
+        设置设备类型
+        :param self:
+        :param binding_id: 设备绑定ID
+        :param device_type: 要设置的设备类型
+        设备类型包括：['开闭灯','调光灯', '双色温灯', '彩灯'...]
+        :return: True/False
+        """
     # ---------------------- base64 ----------------------
 
     def Base64Decode(self, data: str) -> str:
@@ -298,6 +307,15 @@ class _C4:
 
     def IsInDiscover(self, mac: str) -> bool:
         """查询设备mac是否在discover表中，存在返回True，不存在返回False"""
+
+    def GetDeviceIPByDiscover(self) -> str | None:
+        """根据本设备发现协议mac信息查询IP地址"""
+
+    def GetRoomVisible(self, room_id: int) -> dict:
+        """获取房间中显示的设备列表和场景列表"""
+
+    def SetSceneProxyDevice(self, device_id: int):
+        """设置当前设备的场景执行代理设备，若设置了代理设备则执行场景时调用代理设备的ReceivedFromScene接口"""
 
     def ExecuteScene(scene_id: int, command: str = 'EXECUTE'):
         """执行场景，command为EXECUTE时，则为执行场景操作；command为TOGGLE时，反转场景，默认执行场景"""
