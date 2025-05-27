@@ -356,12 +356,12 @@ def ReceivedFromProxy(id_binding, str_command, t_params):
 
     cmd = preprocess(str_command, t_params)
 
-    C4.pub_longdown_delay_send(cmd, t_params, send_to_proxy, DELAY_MAP)
+    C4.pub_longdown_task(send_to_proxy, cmd, t_params, DELAY_MAP.get(cmd, 0))
 
 
 @C4.pub_func_catch()
 @C4.pub_func_log(log_level=C4.DEBUG)
-def ReceivedFromScene(bindingId, sceneId, command, params):
+def ReceivedFromScene(bindingId, sceneId, command, params, position):
     \"""场景变化\"""
     match command:
         case 'PUSH_SCENE':
