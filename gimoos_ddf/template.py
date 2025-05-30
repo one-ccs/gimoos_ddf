@@ -159,7 +159,7 @@ TEMPLATE_XML = """<devicedata>
 TEMPLATE_PY = """from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from gimoos_ddf import C4, PersistData
+    from gimoos_ddf import *
 
 
 DEVICE_ID = C4.GetDeviceID()

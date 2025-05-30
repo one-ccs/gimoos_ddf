@@ -1,15 +1,19 @@
 from typing import Any, Callable, Optional, Iterable, Mapping, TypeVar
 from enum import Enum
-from threading import Thread, Event, Timer, Lock
-from queue import SimpleQueue
+from threading import Event, Timer, Lock
 import math
 
 from typing_extensions import deprecated
-from xknx import XKNX
 import requests
 
 
 T = TypeVar('T')
+
+
+class StateChangeMode(Enum):
+    # 状态变化模式
+    AUTO = 1
+    MANUAL = 2
 
 
 class enumConnectionType(Enum):
@@ -149,6 +153,9 @@ class _C4:
         设备类型包括：['开闭灯','调光灯', '双色温灯', '彩灯'...]
         :return: True/False
         """
+
+    def GetDeviceSharedData(self, device_id: int):
+        """获取对应设备中的共享数据SharedData"""
     # ---------------------- base64 ----------------------
 
     def Base64Decode(self, data: str) -> str:
@@ -367,7 +374,7 @@ class _C4:
     def pub_set_log_level(self: '_C4', level: int | str) -> None:
         """设置日志级别 0 无 10 调试 20 信息 30 警告 40 错误"""
 
-    def pub_log(self: '_C4', message: str, level: int = 20) -> None:
+    def pub_log(self: '_C4', *args, level: int = 20, sep: str = ' ') -> None:
         """打印日志"""
 
     def pub_get_PD(self: '_C4', key: str, default: Optional[T] = None) -> Optional[T]:
@@ -431,32 +438,6 @@ class _C4:
             bool: 成功或失败
         """
 
-    def pub_execute_task(
-        self: '_C4',
-        target: Callable[[Event], None],
-        args: Iterable[Any] = (),
-        kwargs: Optional[Mapping[str, Any]] = None,
-        daemon: bool = True,
-    ) -> Optional[int]:
-        """执行一个任务
-
-        Args:
-            target (Callable[[threading.Event], None]): 运行的函数, 第一个位置参数固定为 stop_flag.
-            args (Iterable[Any], optional): 位置参数. 默认为 ().
-            kwargs (Optional[Mapping[str, Any]], optional): 关键字参数. 默认为 None.
-            daemon (bool, optional): 是否是守护线程. 默认为 True.
-
-        Returns:
-            Optional[int]: 任务 id
-        """
-
-    def pub_chancel_task(self: '_C4', task_id: int):
-        """取消一个任务 （设置任务的 stop_flag）
-
-        Args:
-            task_id (int): 任务 id
-        """
-
     def pub_get_lock(self: '_C4', lock_name: str = 'default_lock') -> Lock:
         """获取一个线程锁，若没有则创建
 
@@ -466,6 +447,21 @@ class _C4:
         Returns:
             Lock: 线程锁对象
         """
+
+    def pub_task(self: '_C4', target: Callable, args: tuple | None = None, kwargs: dict | None = None, *, delay_before: float = 0, delay_after: float = 0, group: str = 'default') -> None:
+        """创建后台任务
+
+        Args:
+            target (Callable): 任务函数
+            args (tuple | None, optional): 任务参数. 默认为 None.
+            kwargs (dict | None, optional): 任务关键字参数. 默认为 None.
+            delay_before (float, optional): 任务前延时, 单位毫秒. 默认为 0.
+            delay_after (float, optional): 任务后延时, 单位毫秒. 默认为 0.
+            group (str, optional): 任务分组. 默认为 'default'.
+        """
+
+    def pub_clear_task(self: '_C4', group: str = 'default') -> None:
+        """清空指定任务组的任务"""
 
     def pub_crc16_xmodem(self: '_C4', data: bytes, polynomial = 0x1021) -> int:
         """
@@ -650,18 +646,6 @@ class _C4:
     def pub_WOL(self: '_C4', mac: str):
         """发送 WOL 包，实现网络唤醒"""
 
-    def pub_task(self: '_C4', target: Callable, args: tuple | None = None, kwargs: dict | None = None, *, delay_before: float = 0, delay_after: float = 0, group: str = 'default') -> None:
-        """创建后台任务
-
-        Args:
-            target (Callable): 任务函数
-            args (tuple | None, optional): 任务参数. 默认为 None.
-            kwargs (dict | None, optional): 任务关键字参数. 默认为 None.
-            delay_before (float, optional): 任务前延时, 单位毫秒. 默认为 0.
-            delay_after (float, optional): 任务后延时, 单位毫秒. 默认为 0.
-            group (str, optional): 任务分组. 默认为 'default'.
-        """
-
     def pub_longdown_task(self: '_C4', send_to_proxy: Callable, cmd: str, params: dict, delay: float, interval: float = 0.5) -> None:
         """创建长按任务"""
 
@@ -674,3 +658,4 @@ class _C4:
 
 C4: _C4 = ...
 PersistData: dict[str, Any] = ...
+SharedData: Any = ...
