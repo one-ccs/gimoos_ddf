@@ -176,7 +176,9 @@ class DriverUpdater():
 
             async with ClientSession() as session:
                 async with session.post(self.url, data=data, headers=headers) as response:
-                    if response.status == 200:
+                    result = await response.json()
+
+                    if result.get('code') == 200:
                         self.suc_list.append(path.name)
                         if not new_hash.get('upload_only'):
                             # 写入新版本号
@@ -187,7 +189,7 @@ class DriverUpdater():
                         return True
                     else:
                         self.fail_list.append(path.name)
-                        self.fail_msg_list.append((path.name, (await response.json()).get('message', '')))
+                        self.fail_msg_list.append((path.name, result.get('message', '')))
                         return False
 
     async def upload_file(self, path: Path, new_hash: dict):

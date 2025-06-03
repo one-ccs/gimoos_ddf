@@ -156,6 +156,16 @@ class _C4:
 
     def GetDeviceSharedData(self, device_id: int):
         """获取对应设备中的共享数据SharedData"""
+
+    def ModifyDeviceXML(self, path: str, value: Any, attribute: str = None):
+        """修改设备的xml配置（支持属性和文本内容）
+        :param self:
+        :param path: XML路径
+        :param value: 要设置的值（文本或XML字符串，当为XML字符串时，将完全替换节点内容）
+        :param attribute: 需要设置的属性名
+        :return: 修改后的完整XML数据
+        """
+
     # ---------------------- base64 ----------------------
 
     def Base64Decode(self, data: str) -> str:
