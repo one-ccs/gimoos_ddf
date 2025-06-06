@@ -1,6 +1,10 @@
+.venv/
 .vscode/
 __pycache__/
 build/
 dist/
 release/
 *.egg-info/
+
+.python-version
+uv.lock
