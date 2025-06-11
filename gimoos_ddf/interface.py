@@ -166,6 +166,17 @@ class _C4:
         :return: 修改后的完整XML数据
         """
 
+    def GetDeviceXML(self, path: str, device_id: int = None, attribute: str = None, as_xml: bool = False):
+        """
+        获取对应设备的xml配置（支持属性和文本内容）
+        :param self:
+        :param path: XML路径，若传递'.'，则获取整个XML数据
+        :param device_id: 设备ID,默认为当前设备ID
+        :param attribute: 需要获取的属性名
+        :param as_xml: 是否返回XML字符串
+        :return:
+        """
+
     # ---------------------- base64 ----------------------
 
     def Base64Decode(self, data: str) -> str:
@@ -312,9 +323,6 @@ class _C4:
 
     def FireRoomEvent(self, room_id, event_name='ROOM_OFF'):
         """手动触发房间编程事件，默认为触发关闭房间事件"""
-
-    def GetDriverXml(self, proxy_id, key):
-        """获取指定设备的指定xml标签内容"""
 
     def RegisterDiscover(self, mac: str) -> bool:
         """注册此状态机设备至discover表中，成功返回True，失败返回False"""
