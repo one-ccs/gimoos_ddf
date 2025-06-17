@@ -177,6 +177,25 @@ class _C4:
         :return:
         """
 
+    def InitButtonInfo(self, button_number: int, pattern_number: int = 1) -> Optional[dict]:
+        """
+        初始化按键设备信息，自动生成按键模式与按键ID对应的按键名称
+        :param self:
+        :param button_number: 按键数量
+        :param pattern_number: 按键模式数量，默认为1
+        :return: 创建成功后的按键信息, 若为None则表示创建失败
+        """
+
+    def ModifyButtonInfo(self, button_id: int, name: str, pattern_id: int = 1) -> Optional[dict]:
+        """
+        修改按键名称
+        :param self:
+        :param button_id: 按键ID
+        :param name: 修改后的按键名称
+        :param pattern_id: 按键模式ID，默认为1
+        :return: 修改后的按键信息, 若为None则表示修改失败
+        """
+
     # ---------------------- base64 ----------------------
 
     def Base64Decode(self, data: str) -> str:
