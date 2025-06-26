@@ -383,7 +383,14 @@ class _C4:
     # ---------------------- driver_public ----------------------
 
     def pub_func_log(self: '_C4', log_level = 20) -> Callable:
-        """装饰器，打印函数调用日志"""
+        """装饰器，打印函数调用日志
+
+        Args:
+            log_level (int, optional): 日志级别. 默认为 20.
+
+        Returns:
+            function: 装饰器函数。
+        """
 
     def pub_func_catch(self: '_C4', is_raise = False, on_except = None) -> Callable:
         """装饰器，捕获函数异常并打印日志
@@ -391,8 +398,8 @@ class _C4:
         注：请在 pub_init 之后调用，否则无法捕获异常。
 
         Args:
-            is_raise (bool, optional): 是否抛出异常. Defaults to False.
-            on_except (function, optional): 异常回调函数. Defaults to None.
+            is_raise (bool, optional): 是否抛出异常. 默认为 False.
+            on_except (function, optional): 异常回调函数. 默认为 None.
 
         Returns:
             function: 装饰器函数。
@@ -402,7 +409,23 @@ class _C4:
         """装饰器，在函数调用前后执行 hook 函数
 
         Args:
-            hook (_type_): 钩子函数，参数为 ('before', *args, **kwargs) 或 ('after', *args, **kwargs), 若 `before` 返回 True 则不执行函数
+            hook (_type_): 钩子函数，参数为 ('before', *args, **kwargs) 或 ('after', *args, **kwargs)
+                : `before` 返回 True 则不执行函数
+                : `after` 置函数返回值为关键字参数 `__result`, 返回非 `None` 值替换函数返回值
+
+        Returns:
+            function: 装饰器函数。
+        """
+
+    def pub_func_cache(self: '_C4', timeout: float = 0) -> Callable:
+        """装饰器，缓存函数返回值
+
+        Args:
+            timeout (float, optional): 缓存超时时间，单位秒，为 `0` 时表示永不过期. 默认为 `0`.
+
+        Returns:
+            function: 装饰器函数。
+                property: `clear` (lambda) 清除缓存
         """
 
     def pub_init(self: '_C4', PersistData: dict, **kwargs) -> None:
@@ -560,8 +583,17 @@ class _C4:
     def pub_percent_hex(self: '_C4', percent: int | float) -> str:
         """将百分比转换为 16 进制字符串形式"""
 
-    def pub_parse_percent_hex(self: '_C4', hex_str: str) -> float:
+    def pub_dispercent_hex(self: '_C4', hex_str: str) -> float:
         """将 16 进制字符串转换为百分比形式"""
+
+    def pub_bounds(self: '_C4', num: int | float, _min: int | float, _max: int | float):
+        """将 num 限定在 [_min:_max]"""
+
+    def pub_percent(self: '_C4', num: int | float, _min: int | float, _max: int | float) -> float:
+        """将数值转换为百分比形式"""
+
+    def pub_dispercent(self: '_C4', num: int | float, _min: int | float, _max: int | float) -> int | float:
+        """将百分比转换为数值形式"""
 
     def pub_int_key(self: '_C4', data: dict):
         """将字典的 key 转换为整数"""
