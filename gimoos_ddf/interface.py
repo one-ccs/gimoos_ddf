@@ -555,6 +555,9 @@ class _C4:
             bytes: 加密或解密后的结果
         """
 
+    def pub_with_default(self: '_C4', data: dict, default: dict) -> None:
+        """将 `data` 中的 `None` 值替换为 `default` 中的值"""
+
     def pub_make_jsonrpc(self: '_C4', **kw) -> str:
         """生成 jsonrpc 格式的请求数据，自动添加 id"""
 

@@ -1,6 +1,6 @@
 [project]
 name = "gimoos-ddf"
-version = "0.7.6"
+version = "0.7.7"
 description = "极墨思驱动开发框架"
 authors = [
     { name = "one-ccs", email = "one-ccs@foxmail.com" }
