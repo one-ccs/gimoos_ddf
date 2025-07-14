@@ -244,7 +244,7 @@ class _C4:
     def get_local_ip(self) -> str:
         """获取本机IP地址"""
 
-    def CreateServer(self, nPort=None, strDelimiter="", protocol="TCP", host="0.0.0.0") -> bool:
+    def CreateServer(self, nPort=None, protocol="TCP", host="0.0.0.0") -> bool:
         """创建接收端"""
 
     def StopServer(self, nPort=None, protocol="TCP") -> bool:
