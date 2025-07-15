@@ -1,6 +1,7 @@
-from typing import Any, Callable, Optional, Iterable, Mapping, TypeVar
+from typing import Any, Callable, Optional, TypeVar, Dict, List, Union
 from enum import Enum
 from threading import Event, Timer, Lock
+from dataclasses import dataclass, field
 import math
 
 from typing_extensions import deprecated
@@ -30,6 +31,187 @@ class _C4:
     DEBUG   = 10
     NOTSET  = 0
     class BreakException(Exception): ...
+
+
+    @dataclass
+    class Song:
+        """
+        歌曲信息类
+
+        Attributes:
+            title: 歌曲名
+            artist: 歌手名
+            album: 专辑名
+            genre: 歌曲风格
+            duration: 歌曲时长（秒）
+            image_url: 歌曲封面图片URL
+            custom_data: 自定义数据
+        """
+        title: str
+        artist: str = None
+        album: str = None
+        genre: str = None
+        duration: int = None
+        image_url: str = None
+        custom_data: Dict[str, Any] = field(default_factory=dict)
+
+        def to_dict(self) -> Dict[str, Union[str, int, Dict[str, Any]]]:
+            """
+            将歌曲信息类转换为字典
+
+            Returns:
+                歌曲信息字典
+            """
+
+        def to_json(self) -> str:
+            """
+            将歌曲信息序列化为JSON字符串
+
+            Returns:
+                JSON格式的歌曲信息
+            """
+
+        @classmethod
+        def from_dict(cls, data: Dict[str, Any]) -> '_C4.Song':
+            """
+            从字典创建Song对象
+
+            Args:
+                data: 包含歌曲信息的字典
+
+            Returns:
+                Song对象
+            """
+
+        def from_json(cls, json_str: str) -> '_C4.Song':
+            """
+            从JSON字符串创建Song对象
+
+            Args:
+                json_str: JSON格式的歌曲信息
+
+            Returns:
+                Song对象
+            """
+
+
+    @dataclass
+    class PlaylistItem:
+        """
+        播放列表项类
+
+        Attributes:
+            song: 歌曲信息
+            item_id: 播放列表中该项的唯一标识符
+        """
+        song: '_C4.Song'
+        item_id: str = None  # 允许为空，在初始化时自动生成
+
+        def to_dict(self) -> Dict[str, Any]:
+            """
+            将播放列表项转换为字典
+
+            Returns:
+                播放列表项字典
+            """
+
+        def to_json(self) -> str:
+            """
+            将播放列表项序列化为JSON字符串
+
+            Returns:
+                JSON格式的播放列表项
+            """
+
+        @classmethod
+        def from_dict(cls, data: Dict[str, Any]) -> '_C4.PlaylistItem':
+            """
+            从字典创建PlaylistItem对象
+
+            Args:
+                data: 包含播放列表项信息的字典
+
+            Returns:
+                PlaylistItem对象
+            """
+
+        def from_json(cls, json_str: str) -> '_C4.PlaylistItem':
+            """
+            从JSON字符串创建PlaylistItem对象
+
+            Args:
+                json_str: JSON格式的播放列表项信息
+
+            Returns:
+                PlaylistItem对象
+            """
+
+
+    @dataclass
+    class SongList:
+        """
+        歌单对象
+
+        Attributes:
+            name: 歌单名
+            songs: 歌曲列表
+        """
+        name: str
+        songs: List['_C4.Song'] = field(default_factory=list)
+
+        def to_playlist(self) -> List['_C4.PlaylistItem']:
+            """
+            将歌单转换为播放列表
+            """
+
+        def to_dict(self) -> Dict[str, Union[str, int, Dict[str, Any]]]:
+            """
+            将歌曲信息类转换为字典
+
+            Returns:
+                歌曲信息字典
+            """
+
+        def to_json(self) -> str:
+            """
+            将歌曲信息序列化为JSON字符串
+
+            Returns:
+                JSON格式的歌曲信息
+            """
+
+        @classmethod
+        def from_dict(cls, data: Dict[str, Any]) -> '_C4.SongList':
+            """
+            从字典创建SongList对象
+
+            Args:
+                data: 包含歌单信息的字典
+
+            Returns:
+                SongList对象
+            """
+
+        @classmethod
+        def from_json(cls, json_str: str) -> '_C4.SongList':
+            """
+            从JSON字符串创建SongList对象
+
+            Args:
+                json_str: JSON格式的歌单信息
+
+            Returns:
+                SongList对象
+            """
+
+
+    class PlayMode:
+        """播放模式"""
+        SEQUENTIAL = "SEQUENTIAL"  # 顺序播放
+        LOOP = "LOOP"  # 循环播放
+        RANDOM = "RANDOM"  # 随机播放
+        SINGLE = "SINGLE"  # 单曲循环
+        VALID_MODES = {SEQUENTIAL, LOOP, RANDOM, SINGLE}
 
     # ---------------------- base ----------------------
 
@@ -194,6 +376,15 @@ class _C4:
         :param name: 修改后的按键名称
         :param pattern_id: 按键模式ID，默认为1
         :return: 修改后的按键信息, 若为None则表示修改失败
+        """
+
+    def NotifyPlayer(self, event: str, data: Any = None):
+        """
+        驱动用于通知音乐播放器数据变化
+        :param self:
+        :param event: 事件类型，playlist/next
+        :param data: 数据
+        :return:
         """
 
     # ---------------------- base64 ----------------------
