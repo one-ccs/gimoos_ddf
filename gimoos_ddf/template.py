@@ -163,6 +163,7 @@ if TYPE_CHECKING:
 
 
 DEVICE_ID = C4.GetDeviceID()
+TC_CONFIG = ('TC', 1234)
 KEYS_DATA = {
     "串口": {
         "ON":               "",
@@ -260,12 +261,13 @@ KEYS_DATA = {
     },
 }
 DELAY_MAP = {}
-TS_CHANNEL = 3002
-TS_PORT = 1234
 
-online_timer = None
-reconnect_timer = None
-last_data_in = 0
+cache = {
+    'tc_id': None,
+    'online_timer', None,
+    'reconnect_timer', None,
+    'last_data_in', 0,
+}
 
 
 def getSerialParameters(input_binding_id):
@@ -282,17 +284,14 @@ def change_state(state: str):
 
 
 def check_online():
-    C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc(method='General.Ping'))
+    C4.pub_send_to_network(cache['tc_id'], C4.pub_make_jsonrpc(method='General.Ping'))
     C4.pub_sleep(3)
     return C4.pub_pass_time(last_data_in) <= 3
 
 
 def connection():
-    if not C4.pub_get_PD('网络地址'): return
-    if (_ := C4.pub_get_PD('控制方式')) and _ != '网络': return C4.pub_destroy_connection('TS', TS_PORT, TS_CHANNEL)
     change_state('未知')
-    C4.pub_destroy_connection('TS', TS_PORT, TS_CHANNEL)
-    C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
+    cache['tc_id'] = C4.pub_create_connection(*TC_CONFIG, C4.pub_get_PD('网络地址'))
 
 
 def send_to_proxy(cmd: str, params: dict):
@@ -307,7 +306,7 @@ def send_to_proxy(cmd: str, params: dict):
             times = 12
             while times:
                 C4.pub_log('等待设备开机...')
-                C4.pub_create_connection('TS', C4.pub_get_PD('网络地址'), TS_PORT, TS_CHANNEL)
+                connection()
                 if check_online():
                     break
                 times -= 1
@@ -318,7 +317,7 @@ def send_to_proxy(cmd: str, params: dict):
                 C4.pub_log('网络唤醒成功')
                 change_state('在线')
         else:
-            if not C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc(method='OnKeyEvent', params=key_data)): return
+            if not C4.pub_send_to_network(cache['tc_id'], C4.pub_make_jsonrpc(method='OnKeyEvent', params=key_data)): return
     C4.pub_send_to_internal(cmd, params)
 
 
@@ -339,7 +338,7 @@ def received_from_serial(data: str):
 
 @C4.pub_func_catch()
 @C4.pub_func_log(log_level=C4.DEBUG)
-def ReceivedFromNetwork(BindID, Port, Data):
+def ReceivedFromNetwork(host, port, data):
     \"""接收网络数据\"""
     global last_data_in
 
@@ -377,14 +376,14 @@ def ExecuteCommand(str_command, t_params):
     \"""处理命令\"""
     match str_command:
         case 'StartUpdate':
-            C4.pub_send_to_network(TS_CHANNEL, TS_PORT, C4.pub_make_jsonrpc(method='StartUpdate'))
+            C4.pub_send_to_network(cache['tc_id'], C4.pub_make_jsonrpc(method='StartUpdate'))
 
 
 @C4.pub_func_catch()
-def OnConnectionStatusChanged(BindID, Port, Status):
-    if Status == 'ONLINE':
+def OnConnectionChanged(host, port, status):
+    if status == 'ONLINE':
         change_state('在线')
-    elif Status == 'CONNECT_FAIL':
+    elif status == 'CONNECT_FAIL':
         C4.pub_log('网络连接失败，请检查网络设置')
     else:
         change_state('离线')
@@ -402,11 +401,12 @@ def OnPropertyChanged(key: str, value: str):
                 C4.pub_show_property('网络地址')
                 C4.pub_show_property('网络端口')
                 C4.UpdateProperty('网络地址', C4.pub_get_PD('网络地址'))
+                connection()
             else:
                 C4.pub_hide_property('驱动状态')
                 C4.pub_hide_property('网络地址')
                 C4.pub_hide_property('网络端口')
-            connection()
+                C4.pub_destroy_connection(cache["tc_id"])
         case '网络地址':
             connection()
 
@@ -421,14 +421,14 @@ def OnBindingChanged(binding_id, connection_event, other_device_id, other_bindin
 @C4.pub_func_catch()
 def OnTimerExpired(timer_id):
     \"""定时器事件\"""
-    if timer_id == online_timer and C4.pub_get_PD('控制方式') == '网络' and C4.pub_get_PD('网络地址'):
+    if timer_id == cache['online_timer'] and cache['tc_id']:
         if check_online():
             change_state('在线')
         else:
             change_state('离线')
 
-    if timer_id == reconnect_timer and C4.pub_get_PD('控制方式') == '网络':
-        C4.pub_log('网络重连中...')
+    if timer_id == cache['reconnect_timer'] and cache['tc_id']:
+        C4.pub_log('网络重连中...', level=C4.DEBUG)
         connection()
 
 

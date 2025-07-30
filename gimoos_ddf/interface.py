@@ -1,6 +1,6 @@
-from typing import Any, Callable, Optional, TypeVar, Dict, List, Union
+from typing import Any, Callable, Optional, TypeVar, Dict, List, Union, Literal
 from enum import Enum
-from threading import Event, Timer, Lock
+from threading import Timer, Lock
 from dataclasses import dataclass, field
 import math
 
@@ -30,7 +30,14 @@ class _C4:
     INFO    = 20
     DEBUG   = 10
     NOTSET  = 0
-    class BreakException(Exception): ...
+
+    class BreakException(Exception):
+        """用于中断执行流程的异常
+
+        Args:
+            message: 异常信息
+            level: 异常级别, 默认为 WARING
+        """
 
 
     @dataclass
@@ -83,6 +90,7 @@ class _C4:
                 Song对象
             """
 
+        @classmethod
         def from_json(cls, json_str: str) -> '_C4.Song':
             """
             从JSON字符串创建Song对象
@@ -96,73 +104,16 @@ class _C4:
 
 
     @dataclass
-    class PlaylistItem:
-        """
-        播放列表项类
-
-        Attributes:
-            song: 歌曲信息
-            item_id: 播放列表中该项的唯一标识符
-        """
-        song: '_C4.Song'
-        item_id: str = None  # 允许为空，在初始化时自动生成
-
-        def to_dict(self) -> Dict[str, Any]:
-            """
-            将播放列表项转换为字典
-
-            Returns:
-                播放列表项字典
-            """
-
-        def to_json(self) -> str:
-            """
-            将播放列表项序列化为JSON字符串
-
-            Returns:
-                JSON格式的播放列表项
-            """
-
-        @classmethod
-        def from_dict(cls, data: Dict[str, Any]) -> '_C4.PlaylistItem':
-            """
-            从字典创建PlaylistItem对象
-
-            Args:
-                data: 包含播放列表项信息的字典
-
-            Returns:
-                PlaylistItem对象
-            """
-
-        def from_json(cls, json_str: str) -> '_C4.PlaylistItem':
-            """
-            从JSON字符串创建PlaylistItem对象
-
-            Args:
-                json_str: JSON格式的播放列表项信息
-
-            Returns:
-                PlaylistItem对象
-            """
-
-
-    @dataclass
     class SongList:
         """
-        歌单对象
+        歌单，播放列表对象
 
         Attributes:
             name: 歌单名
             songs: 歌曲列表
         """
-        name: str
+        name: str = None
         songs: List['_C4.Song'] = field(default_factory=list)
-
-        def to_playlist(self) -> List['_C4.PlaylistItem']:
-            """
-            将歌单转换为播放列表
-            """
 
         def to_dict(self) -> Dict[str, Union[str, int, Dict[str, Any]]]:
             """
@@ -403,24 +354,31 @@ class _C4:
 
     # ---------------------- Device_Interface ----------------------
 
+    @deprecated('使用 "CreateServer"、"ServerSend"、"StopServer"、"CreateClient"、"ClientSend"、"StopClient" 代替')
     def CreateNetworkConnection(self, BindID, NetworkAdds, ConnectionType:enumConnectionType="TCP",Options={}) -> bool:
         """创建发送端 TCP/UDP/MULTICAST"""
 
+    @deprecated('使用 "CreateServer"、"ServerSend"、"StopServer"、"CreateClient"、"ClientSend"、"StopClient" 代替')
     def DestroyNetworkConnection(self, BindID) -> bool:
         """删除发送端"""
 
+    @deprecated('使用 "CreateServer"、"ServerSend"、"StopServer"、"CreateClient"、"ClientSend"、"StopClient" 代替')
     def NetPortOptions(self, BindID, Port, ConnectionType:enumConnectionType="TCP", tPortParams={}):
         """修改发送端配置"""
 
+    @deprecated('使用 "CreateServer"、"ServerSend"、"StopServer"、"CreateClient"、"ClientSend"、"StopClient" 代替')
     def NetConnect(self, BindID, nPort, type=None, nGrowBytes=0, strStart=None , strEnd=None, bSuppressConnectionEvents=None):
         """连接"""
 
+    @deprecated('使用 "CreateServer"、"ServerSend"、"StopServer"、"CreateClient"、"ClientSend"、"StopClient" 代替')
     def SendToNetwork(self, BindID, Port, Message):
         """发送端发送 TCP/UDP 数据"""
 
+    @deprecated('使用 "CreateServer"、"ServerSend"、"StopServer"、"CreateClient"、"ClientSend"、"StopClient" 代替')
     def SendBroadcast(self, BindID, Port, Message):
         """发送端发送 MULTICAST 数据"""
 
+    @deprecated('使用 "CreateServer"、"ServerSend"、"StopServer"、"CreateClient"、"ClientSend"、"StopClient" 代替')
     def NetDisconnect(self, BindID, Port):
         """断开连接"""
 
@@ -435,14 +393,63 @@ class _C4:
     def get_local_ip(self) -> str:
         """获取本机IP地址"""
 
-    def CreateServer(self, nPort=None, protocol="TCP", host="0.0.0.0") -> bool:
-        """创建接收端"""
+    def CreateServer(self, port: int, protocol: enumConnectionType = "TCP", host: str = "0.0.0.0", callback: callable = None) -> str | None:
+        """
+        创建与本设备绑定的Server端服务
+        :param self:
+        :param port:端口号
+        :param protocol:协议类型
+        :param callback:回调函数
+        :param host:主机地址
+        :return:
+        """
 
-    def StopServer(self, nPort=None, protocol="TCP") -> bool:
-        """停止SERVER模式创建的服务"""
+    def ServerSend(self, server_id: str, data: str | bytes, handle: tuple[str, int]) -> None:
+        """
+        服务端发送数据
+        :param self:
+        :param server_id:服务ID
+        :param data:要发送的数据
+        :param handle:客户端句柄
+        :return:
+        """
 
-    def ServerSend(self, Handle, Data):
-        """none"""
+    def StopServer(self, server_id: str) -> None:
+        """
+        停止与本设备绑定的Server端服务
+        :param self:
+        :param server_id:服务ID
+        :return:
+        """
+
+    def CreateClient(self, address: str, port: int, protocol: enumConnectionType = "TCP", callback=None, options=None) -> str | None:
+        """
+        创建Client模式的网络连接
+        :param self:
+        :param port: 网络端口
+        :param address: 网络地址
+        :param protocol: 连接类型，TCP,UDP,MULTICAST
+        :param callback: 网络接收时的回调函数
+        :param options: 连接参数
+        :return:
+        """
+
+    def ClientSend(self, client_id: str, data: str | bytes) -> bool:
+        """
+        发送数据到对应服务器
+        :param self:
+        :param client_id: 客户端ID
+        :param data: 发送数据
+        :return:
+        """
+
+    def StopClient(self, client_id: str) -> bool:
+        """
+        断开对应网络的服务器的连接
+        :param self:
+        :param client_id: 客户端ID
+        :return:
+        """
 
     def GetControllerNetworkAddress(self):
         """none"""
@@ -856,37 +863,55 @@ class _C4:
     def pub_knx_check_addr(self: '_C4', addr: str):
         """验证 KNX 地址是否合法"""
 
-    def pub_create_connection(self: '_C4', type: str, host: str, *args) -> None:
+    def pub_create_connection(self: '_C4', type: Literal['TC', 'UC', 'MC', 'TS', 'US', 'MS'], port: int, host: str | None = None, pretreatment: Callable | None = None) -> str | None:
         """建立指定连接
 
         Args:
-            type (str): 连接类型，例：
-                'MS'（多播发送）
-                'MR'（多播接收）
-                'US'（UDP 发送）
-                'UR'（UDP 接收）
-                'TS'（TCP 发送）
-                'TR'（TCP 接收）
-            host (str): ip 地址
-            *args: 其他参数，根据连接类型不同而不同
-                '?S' args[0]: 端口号、args[1]: 通道号
-                '?R' args[0]: 端口号
+            type (str): 连接类型
+                - 'TC'  TCP 客户端
+                - 'UC'  UDP 客户端
+                - 'MC'  多播客户端
+                - 'TS'  TCP 服务端
+                - 'US'  UDP 服务端
+                - 'MS'  多播服务端
+            port (int): 端口号
+            host (str): ip 地址 (服务端为可选项)
+            pretreatment (Callable, optional): 预处理函数, 默认为 None.
+
+        Returns:
+            str: 连接 ID
         """
 
-    def pub_destroy_connection(self: '_C4', type: str, port: int, channel: int | None = None) -> None:
-        """关闭指定连接"""
+    def pub_destroy_connection(self: '_C4', id: str) -> None:
+        """关闭指定连接
 
-    def pub_send_to_ir(self: '_C4', code: str, count: int = 1, is_hex: bool = False, channel: int = 3000) -> None:
-        """发送红外数据，格式：{ code: str, count: int }"""
+        Args:
+            id (str): 连接 ID
+        """
+
+    def pub_send_to_network(self: '_C4', id: str, data: str | bytes, target: tuple[str, int] | None = None, retry: int = 3, interval: float = 3) -> bool:
+        """发送网络数据
+
+        Args:
+            id (str): 连接 ID
+            data (str | bytes): 要发送的数据
+            target (tuple[str, int], optional): 目标地址 (服务端连接时有效)
+            retry (int, optional): 重试次数. 默认为 3.
+            interval (float, optional): 重试间隔. 默认为 3.
+
+        Returns:
+            bool: 是否发送成功
+        """
+
+    @deprecated('使用 "pub_send_to_network" 代替')
+    def pub_send_to_multicast(self: '_C4', channel: int, port: int, message: str) -> None:
+        """向对应端口发送多播数据"""
 
     def pub_send_to_serial(self: '_C4', hex_data: str | list, interval: float = 0.1, is_hex: bool = False, channel: int = 3001) -> None:
         """发送串口数据，格式：{ hex_data: str, interval: float }"""
 
-    def pub_send_to_network(self: '_C4', channel: int, port: int, message: str, retry: int = 3, interval: float = 3) -> bool:
-        """向对应端口发送网络数据，若 TCP 发送失败，则重试指定次数"""
-
-    def pub_send_to_multicast(self: '_C4', channel: int, port: int, message: str) -> None:
-        """向对应端口发送多播数据"""
+    def pub_send_to_ir(self: '_C4', code: str, count: int = 1, is_hex: bool = False, channel: int = 3000) -> None:
+        """发送红外数据，格式：{ code: str, count: int }"""
 
     def pub_send_to_internal(self: '_C4', command: str, params: dict, channel: int = 5001) -> None:
         """向内部通道发送命令，改变设备状态"""

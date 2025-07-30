@@ -175,7 +175,7 @@ class DriverUpdater():
             headers = {'Authorization': f'Basic {self.token}',}
 
             async with ClientSession() as session:
-                async with session.post(self.url, data=data, headers=headers) as response:
+                async with session.post(self.url, data=data, headers=headers, timeout=None) as response:
                     result = await response.json()
 
                     if result.get('code') == 200:
