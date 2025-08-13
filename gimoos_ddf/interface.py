@@ -626,6 +626,13 @@ class _C4:
                 property: `clear` (lambda) 清除缓存
         """
 
+    def pub_func_debounced(self: '_C4', delay: float | Callable[[tuple, dict], float]):
+        """装饰器，给函数添加防抖功能
+
+        Args:
+            delay (float | Callable[[tuple, dict], float]): 延迟时间 (秒)
+        """
+
     def pub_init(self: '_C4', PersistData: dict, **kwargs) -> None:
         """初始化公共函数库，并将持久化数据推送到前端（忽略以 _ 开头的属性）"""
 

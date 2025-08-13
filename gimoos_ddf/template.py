@@ -406,7 +406,7 @@ def OnPropertyChanged(key: str, value: str):
                 C4.pub_hide_property('驱动状态')
                 C4.pub_hide_property('网络地址')
                 C4.pub_hide_property('网络端口')
-                C4.pub_destroy_connection(cache["tc_id"])
+                cache['tc_id'] = C4.pub_destroy_connection(cache["tc_id"])
         case '网络地址':
             connection()
 
