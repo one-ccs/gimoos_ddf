@@ -286,7 +286,7 @@ def change_state(state: str):
 def check_online():
     C4.pub_send_to_network(cache['tc_id'], C4.pub_make_jsonrpc(method='General.Ping'))
     C4.pub_sleep(3)
-    return C4.pub_pass_time(last_data_in) <= 3
+    return C4.pub_pass_time(cache['last_data_in']) <= 3
 
 
 def connection():
@@ -340,9 +340,7 @@ def received_from_serial(data: str):
 @C4.pub_func_log(log_level=C4.DEBUG)
 def ReceivedFromNetwork(host, port, data):
     \"""接收网络数据\"""
-    global last_data_in
-
-    last_data_in = C4.pub_time()
+    cache['last_data_in'] = C4.pub_time()
 
 
 @C4.pub_func_catch()
@@ -440,12 +438,7 @@ def OnInit(**kwargs):
     online_timer = C4.pub_set_interval(1 * 60)
     reconnect_timer = C4.pub_set_interval(60 * 60)
 
-    if 'ip' in kwargs or C4.pub_get_PD('控制方式') == '网络':
-        C4.pub_update_property('控制方式', '网络')
-        OnPropertyChanged('控制方式', '网络')
-    else:
-        OnPropertyChanged('控制方式', '串口')
-
+    OnPropertyChanged('控制方式', C4.pub_get_PD('控制方式', '串口'))
 
 @C4.pub_func_catch()
 def OnDestroy(event: str):

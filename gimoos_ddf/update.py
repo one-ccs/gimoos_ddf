@@ -216,7 +216,7 @@ class DriverUpdater():
         await asyncio.gather(*tasks)
         self.tq.close()
 
-        logger.info(f'更新完成, 成功：{len(self.suc_list)}, 失败：{len(self.fail_list)}' + f', 忽略: {len(self.ignore)}' if self.ignore else '')
+        logger.info(f'更新完成, 成功：{len(self.suc_list)}, 失败：{len(self.fail_list)}, 忽略: {len(self.ignore or [])}')
         for name, message in self.fail_msg_list:
             self.record.setdefault(self.host, {}).pop(name, None)
             logger.warning(f'更新 "{name}" 失败, 原因: "{message}"')
