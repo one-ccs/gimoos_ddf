@@ -11,12 +11,6 @@ import requests
 T = TypeVar('T')
 
 
-class StateChangeMode(Enum):
-    # 状态变化模式
-    AUTO = 1
-    MANUAL = 2
-
-
 class enumConnectionType(Enum):
     TCP          = "TCP"
     UDP          = "UDP"
@@ -31,6 +25,7 @@ class _C4:
     DEBUG   = 10
     NOTSET  = 0
 
+
     class BreakException(Exception):
         """用于中断执行流程的异常
 
@@ -38,6 +33,12 @@ class _C4:
             message: 异常信息
             level: 异常级别, 默认为 WARING
         """
+
+
+    class StateChangeMode(Enum):
+        # 状态变化模式
+        AUTO = 1
+        MANUAL = 2
 
 
     @dataclass
@@ -114,6 +115,7 @@ class _C4:
         """
         name: str = None
         songs: List['_C4.Song'] = field(default_factory=list)
+        custom_data: Dict[str, Any] = field(default_factory=dict)
 
         def to_dict(self) -> Dict[str, Union[str, int, Dict[str, Any]]]:
             """
@@ -158,10 +160,19 @@ class _C4:
 
     class PlayMode:
         """播放模式"""
-        SEQUENTIAL = "SEQUENTIAL"  # 顺序播放
-        LOOP = "LOOP"  # 循环播放
-        RANDOM = "RANDOM"  # 随机播放
-        SINGLE = "SINGLE"  # 单曲循环
+
+        SEQUENTIAL = "SEQUENTIAL"
+        """顺序播放"""
+
+        LOOP = "LOOP"
+        """循环播放"""
+
+        RANDOM = "RANDOM"
+        """随机播放"""
+
+        SINGLE = "SINGLE"
+        """单曲循环"""
+
         VALID_MODES = {SEQUENTIAL, LOOP, RANDOM, SINGLE}
 
     # ---------------------- base ----------------------
@@ -335,6 +346,43 @@ class _C4:
         :param self:
         :param event: 事件类型，playlist/next
         :param data: 数据
+        :return:
+        """
+
+    def AddRtsp(self, rtsp_url: str) -> str | None:
+        """
+        添加RTSP地址到设备
+        :param self:
+        :param rtsp_url: rtsp地址
+        :return: 摄像头唯一链接ID
+        """
+
+    def DAHCalculate(self, msg_type: str, timestamp: int, data: dict[str, Any]) -> str:
+        """
+        计算数据完整性校验码
+        :param self:
+        :param msg_type:  报文类型
+        :param timestamp:  时间戳
+        :param data:  数据
+        :return: 数据完整性校验码
+        """
+
+    def DAHVerify(self, msg_type: str, timestamp: int, data: dict[str, Any], checksum: str) -> bool:
+        """
+        验证数据完整性
+        :param self:
+        :param msg_type: 报文类型
+        :param timestamp: 时间戳
+        :param data: 数据
+        :param checksum: 数据完整性校验码
+        :return: 成功True, 失败False
+        """
+
+    def GetSceneDevice(self, scene_id: int):
+        """
+        获取场景下所有设备
+        :param self:
+        :param scene_id: 场景ID
         :return:
         """
 
@@ -535,8 +583,13 @@ class _C4:
     def send_command(self, proxy_id, command, params=None):
         """给指定设备发送指令控制"""
 
-    def register_device(self, device_list):
+    def RegisterDevice(self, device_list):
         """遥控器注册要监听的设备"""
+
+    def RegisterScene(self, scene_list: list[int]) -> None:
+        """
+        当前设备要监听的场景，需要实现OnSceneStateChange(scene_id, state)方法, state 1为激活，2为非激活, 3为设备变化
+        """
 
     def FireRoomEvent(self, room_id, event_name='ROOM_OFF'):
         """手动触发房间编程事件，默认为触发关闭房间事件"""
@@ -558,6 +611,13 @@ class _C4:
 
     def SetSceneProxyDevice(self, device_id: int):
         """设置当前设备的场景执行代理设备，若设置了代理设备则执行场景时调用代理设备的ReceivedFromScene接口"""
+
+    def GetAllRoomDevices(self) -> list[dict[str, str | int]]:
+        """
+        获取项目下所有房间显示设备的所有信息
+        :param self:
+        :return:
+        """
 
     def ExecuteScene(scene_id: int, command: str = 'EXECUTE'):
         """执行场景，command为EXECUTE时，则为执行场景操作；command为TOGGLE时，反转场景，默认执行场景"""
@@ -590,17 +650,23 @@ class _C4:
             function: 装饰器函数。
         """
 
-    def pub_func_catch(self: '_C4', is_raise = False, on_except = None) -> Callable:
+    def pub_func_catch(self: '_C4', is_raise: bool = False, on_except: Callable[[Exception], None] | None = None) -> Callable:
         """装饰器，捕获函数异常并打印日志
-
-        注：请在 pub_init 之后调用，否则无法捕获异常。
 
         Args:
             is_raise (bool, optional): 是否抛出异常. 默认为 False.
-            on_except (function, optional): 异常回调函数. 默认为 None.
+            on_except (Callable[[Exception], None] | None, optional): 异常回调函数. 默认为 None.
 
         Returns:
             function: 装饰器函数。
+        """
+
+    def pub_class_catch(self: '_C4', cls, is_raise: bool = False, on_except: Callable[[Exception], None] | None = None):
+        """装饰器，捕获类方法执行异常，并输出日志
+
+        Args:
+            is_raise (bool, optional): 是否抛出异常. 默认为 False.
+            on_except (Callable[[Exception], None] | None, optional): 异常回调函数. 默认为 None.
         """
 
     def pub_func_hook(self: '_C4', hook) -> Callable:
@@ -626,11 +692,12 @@ class _C4:
                 property: `clear` (lambda) 清除缓存
         """
 
-    def pub_func_debounced(self: '_C4', delay: float | Callable[[tuple, dict], float]):
+    def pub_func_debounced(self: '_C4', delay: float | Callable[[tuple, dict], float], diff_params: bool = False):
         """装饰器，给函数添加防抖功能
 
         Args:
             delay (float | Callable[[tuple, dict], float]): 延迟时间 (秒)
+            diff_params (bool, optional): 是否对参数进行比较, 相同参数才会进行防抖. 默认为 False.
         """
 
     def pub_init(self: '_C4', PersistData: dict, **kwargs) -> None:
@@ -681,13 +748,13 @@ class _C4:
     def pub_clear_interval(self: '_C4', timer_id: int) -> None:
         """清除一个定时器"""
 
-    def pub_set_timeout(self: '_C4', interval: float, function: Callable, *args, **kwargs) -> Timer:
+    def pub_set_timeout(self: '_C4', interval: float, function: Callable, args: Any | None = None, kwargs: Any | None = None) -> Timer:
         """定时 n 秒后执行函数"""
 
     def pub_clear_timeout(self: '_C4', timer: Timer) -> None:
         """清除一个定时器"""
 
-    def pub_retry(self: '_C4', target: Callable, args: tuple = (), kwargs: dict | None = None, *, condition: Callable, max_retry: int = 3, timeout: float = 3, interval: float = 0.1):
+    def pub_retry(self: '_C4', target: Callable, args: tuple = (), kwargs: dict | None = None, *, condition: Callable, msg: str | None = None, max_retry: int = 3, timeout: float = 3, interval: float = 0.1) -> bool:
         """重试执行函数，直到满足条件或达到最大重试次数
 
         Args:
@@ -727,6 +794,16 @@ class _C4:
 
     def pub_clear_task(self: '_C4', group: str = 'default') -> None:
         """清空指定任务组的任务"""
+
+    def pub_xor_sum(self: '_C4', data: bytes) -> int:
+        """计算异或校验和
+
+        Args:
+            data (bytes): 数据
+
+        Returns:
+            int: 校验和
+        """
 
     def pub_crc16_xmodem(self: '_C4', data: bytes, polynomial = 0x1021) -> int:
         """
@@ -846,10 +923,10 @@ class _C4:
     def pub_dict_to_xml(self: '_C4', data: dict, root_name: str | None = None, encoding: str = 'unicode') -> str:
         """将字典数据转换为xml格式"""
 
-    def pub_fetch_get(self: '_C4', host, port, path, params = None, protocol = 'http', timeout = 3) -> requests.Response | None:
+    def pub_fetch_get(self: '_C4', host, port, path, params = None, protocol = 'http', timeout = 3, **kwargs) -> requests.Response | None:
         """requests.get 封装"""
 
-    def pub_fetch_post(self: '_C4', host, port, path, params = None, data = None, protocol='http', timeout = 3) -> requests.Response | None:
+    def pub_fetch_post(self: '_C4', host, port, path, params = None, data = None, json = None, protocol='http', timeout = 3, **kwargs) -> requests.Response | None:
         """requests.post 封装"""
 
     def pub_knx_connect(self: '_C4', addr: tuple[str, int], rate_limit: int = 20) -> None:
@@ -914,23 +991,53 @@ class _C4:
     def pub_send_to_multicast(self: '_C4', channel: int, port: int, message: str) -> None:
         """向对应端口发送多播数据"""
 
-    def pub_send_to_serial(self: '_C4', hex_data: str | list, interval: float = 0.1, is_hex: bool = False, channel: int = 3001) -> None:
-        """发送串口数据，格式：{ hex_data: str, interval: float }"""
+    def pub_send_to_serial(self: '_C4', hex_data: str | list, interval: float = 0.1, to_hex: bool = False, channel: int = 3001) -> None:
+        """发送串口数据，内部格式：{ hex_data: str, interval: float }
 
-    def pub_send_to_ir(self: '_C4', code: str, count: int = 1, is_hex: bool = False, channel: int = 3000) -> None:
-        """发送红外数据，格式：{ code: str, count: int }"""
+        Args:
+            hex_data (str | list): 要发送的串口数据
+            interval (float, optional): 发送间隔. 默认为 0.1.
+            to_hex (bool, optional): 是否将数据转换为十六进制格式. 默认为 False.
+        """
+
+    def pub_send_to_ir(self: '_C4', code: str | list, count: int = 1, to_hex: bool = False, channel: int = 3000) -> None:
+        """发送红外数据，内部格式：{ code: str, count: int }
+
+        Args:
+            code (str | list): 要发送的红外码
+            count (int, optional): 发送次数. 默认为 1.
+            to_hex (bool, optional): 是否将数据转换为十六进制格式. 默认为 False.
+        """
 
     def pub_send_to_internal(self: '_C4', command: str, params: dict, channel: int = 5001) -> None:
         """向内部通道发送命令，改变设备状态"""
 
-    def pub_send_to_device(self: '_C4', cmd: str, params: dict, device_id: int) -> None:
-        """向指定设备发送命令"""
+    def pub_send_to_device(self: '_C4', cmd: str, params: dict | str, device_id: int) -> None:
+        """向指定设备发送命令
 
-    def pub_send_to_master(self: '_C4', command: str, params: dict | str, channel: int = 4000) -> None:
-        """向主控设备发送数据"""
+        Args:
+            cmd (str): 命令
+            params (dict | str): 参数
+            device_id (int): 设备 ID
+        """
 
-    def pub_send_to_slave(self: '_C4', command: str, params: dict | str, channel: int | str = '4000') -> None:
-        """向从控设备发送消息，channel 为 str 时，向所有从机发送"""
+    def pub_send_to_master(self: '_C4', cmd: str, params: dict | str, target: int | str = '4000') -> None:
+        """向主控设备发送数据
+
+        Args:
+            cmd (str): 命令
+            params (dict | str): 参数
+            target (int | str, optional): 通道号 (str, 群发) 或 设备 ID (int). 默认为 '4000'.
+        """
+
+    def pub_send_to_slave(self: '_C4', cmd: str, params: dict | str, target: int | str = '4000') -> None:
+        """向从控设备发送数据
+
+        Args:
+            cmd (str): 命令
+            params (dict | str): 参数
+            target (int | str, optional): 通道号 (str, 群发) 或 设备 ID (int). 默认为 '4000'.
+        """
 
     def pub_get_broadcast_ip(self: '_C4') -> str:
         """获取广播地址"""
@@ -940,6 +1047,17 @@ class _C4:
 
     def pub_WOL(self: '_C4', mac: str):
         """发送 WOL 包，实现网络唤醒"""
+
+    def pub_data_pipe(self: '_C4', data: bytes, size_len: int = 2) -> list[bytes]:
+        """解析带长度前缀的数据，可以应对粘包拆包问题
+
+        Args:
+            data (bytes): 带长度前缀的数据
+            size_len (int, optional): 长度前缀的字节数. 默认为 2.
+
+        Returns:
+            list[bytes]: 解析后的包列表
+        """
 
     def pub_longdown_task(self: '_C4', send_to_proxy: Callable, cmd: str, params: dict, delay: float, interval: float = 0.5) -> None:
         """创建长按任务"""

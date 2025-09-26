@@ -210,7 +210,7 @@ KEYS_DATA = {
         "CHANNEL_DOWN":     "",
         "CHANNEL_UP":       "",
         "SET_CHANNEL":      "",
-        "SET_VOLUME_LEVEL": "",
+        "VOLUME_LEVEL": "",
     },
     "网络": {
         "ON":               "",
@@ -257,7 +257,7 @@ KEYS_DATA = {
         "CHANNEL_DOWN":     "",
         "CHANNEL_UP":       "",
         "SET_CHANNEL":      "",
-        "SET_VOLUME_LEVEL": "",
+        "VOLUME_LEVEL": "",
     },
 }
 DELAY_MAP = {}
@@ -439,6 +439,7 @@ def OnInit(**kwargs):
     reconnect_timer = C4.pub_set_interval(60 * 60)
 
     OnPropertyChanged('控制方式', C4.pub_get_PD('控制方式', '串口'))
+
 
 @C4.pub_func_catch()
 def OnDestroy(event: str):
