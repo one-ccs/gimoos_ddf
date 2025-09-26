@@ -17,6 +17,7 @@ from .logger import logger
 
 SDP = 'driver.py'
 SDX = 'driver.xml'
+SDF = 'driver.pdf'
 
 
 class DriverUpdater():
@@ -84,8 +85,15 @@ class DriverUpdater():
             hash = self.record.get(self.host, {}).get(item.name, {})
             driver_py_hash = self.__get_hash(driver_py)
             driver_xml_hash = self.__get_hash(driver_xml)
+            driver_pdf_hash = None
 
-            if hash.get(SDP) == driver_py_hash and hash.get(SDX) == driver_xml_hash:
+            if (driver_pdf := item / SDF).exists():
+                driver_pdf_hash = self.__get_hash(driver_pdf)
+
+            if (hash.get(SDP) == driver_py_hash
+                and hash.get(SDX) == driver_xml_hash
+                and hash.get(SDF) == driver_pdf_hash
+            ):
                 logger.debug(f'路径 "{item}" 未更改, 已忽略')
                 continue
 
@@ -99,13 +107,17 @@ class DriverUpdater():
             if last_host != self.host:
                 last_hash = self.record.get(last_host, {}).get(item.name, {})
 
-                if last_hash.get(SDP) == driver_py_hash and last_hash.get(SDX) == driver_xml_hash:
+                if (last_hash.get(SDP) == driver_py_hash
+                    and last_hash.get(SDX) == driver_xml_hash
+                    and last_hash.get(SDF) == driver_pdf_hash
+                ):
                     upload_only = True
 
             list.append((item, {
                 'upload_only': upload_only,
                 SDP: driver_py_hash,
                 SDX: driver_xml_hash,
+                SDF: driver_pdf_hash,
             }))
 
         return list
@@ -161,6 +173,10 @@ class DriverUpdater():
         # 构建 zip 文件
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zf:
             zf.write(str(path / SDP), SDP)
+
+            if Path(path / SDF).exists():
+                zf.write(str(path / SDF), SDF)
+
             if not new_hash.get('upload_only'):
                 zf.writestr(SDX, dom)
             else:
