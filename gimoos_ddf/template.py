@@ -16,6 +16,37 @@ TEMPLATE_XML = """<devicedata>
         </event>
     </events>
 
+    <events_display>
+        <电源打开>true</电源打开>
+        <电源关闭>true</电源关闭>
+        <音量变化>true</音量变化>
+        <静音变化>true</静音变化>
+        <播放>false</播放>
+        <暂停>false</暂停>
+        <停止>false</停止>
+        <输入通道变化>false</输入通道变化>
+        <输出通道变化>false</输出通道变化>
+    </events_display>
+
+    <commands_display>
+        <数字按键>false</数字按键>
+        <方向按键>false</方向按键>
+        <音量>true</音量>
+        <静音>true</静音>
+        <输入>true</输入>
+        <频道>false</频道>
+        <菜单>false</菜单>
+        <信息>false</信息>
+        <取消>false</取消>
+        <确定>false</确定>
+        <音效>true</音效>
+        <播放>false</播放>
+        <暂停>false</暂停>
+        <停止>false</停止>
+        <快进快退>false</快进快退>
+        <上一首下一首>false</上一首下一首>
+    </commands_display>
+
     <config>
         <properties>
             <property>
@@ -116,13 +147,47 @@ TEMPLATE_XML = """<devicedata>
 
         <connection>
             <id>1000</id>
-            <connectionname>音量控制</connectionname>
+            <connectionname>音频终端</connectionname>
             <type>1</type>
-            <consumer>False</consumer>
-            <linelevel>False</linelevel>
+            <consumer>false</consumer>
             <classes>
                 <class>
-                    <classname>Volume_Control</classname>
+                    <classname>Audio_Endpoint</classname>
+                </class>
+            </classes>
+        </connection>
+        <connection>
+            <id>1001</id>
+            <connectionname>音频音量</connectionname>
+            <type>1</type>
+            <consumer>false</consumer>
+            <classes>
+                <class>
+                    <classname>Audio_Volume</classname>
+                </class>
+            </classes>
+        </connection>
+        <connection>
+            <id>1002</id>
+            <connectionname>视频终端</connectionname>
+            <type>1</type>
+            <consumer>false</consumer>
+            <multilink>false</multilink>
+            <classes>
+                <class>
+                    <classname>Video_Endpoint</classname>
+                </class>
+            </classes>
+        </connection>
+        <connection>
+            <id>1003</id>
+            <connectionname>视频音量</connectionname>
+            <type>1</type>
+            <consumer>true</consumer>
+            <multilink>false</multilink>
+            <classes>
+                <class>
+                    <classname>Video_Volume</classname>
                 </class>
             </classes>
         </connection>
@@ -203,7 +268,6 @@ KEYS_DATA = {
         "INPUT_200":        "",
         "INPUT_201":        "",
         "INPUT_202":        "",
-
         "*":                "",
         "#":                "",
         "-":                "",
@@ -250,7 +314,6 @@ KEYS_DATA = {
         "INPUT_200":        "",
         "INPUT_201":        "",
         "INPUT_202":        "",
-
         "*":                "",
         "#":                "",
         "-":                "",
@@ -272,7 +335,7 @@ cache = {
 
 def getSerialParameters(input_binding_id):
     \"""获取串口参数\"""
-    return {"baud_rate": 9600, "data_bits": 8, "stop_bits": 1, "parity": 0}
+    return {'baud_rate': 9600, 'data_bits': 8, 'stop_bits': 1, 'parity': 0}
 
 
 def change_state(state: str):
@@ -304,13 +367,12 @@ def send_to_proxy(cmd: str, params: dict):
             C4.pub_WOL(C4.pub_get_PD('MAC地址'))
 
             times = 12
-            while times:
-                C4.pub_log('等待设备开机...')
-                connection()
-                if check_online():
-                    break
+            while times and not check_online():
                 times -= 1
+                C4.pub_log('等待设备开机...')
                 C4.pub_sleep(5)
+                connection()
+                C4.pub_WOL(C4.pub_get_PD('MAC地址'))
             if times == 0:
                 raise C4.BreakException('网络唤醒失败')
             else:
@@ -404,7 +466,7 @@ def OnPropertyChanged(key: str, value: str):
                 C4.pub_hide_property('驱动状态')
                 C4.pub_hide_property('网络地址')
                 C4.pub_hide_property('网络端口')
-                cache['tc_id'] = C4.pub_destroy_connection(cache["tc_id"])
+                cache['tc_id'] = C4.pub_destroy_connection(cache['tc_id'])
         case '网络地址':
             connection()
 

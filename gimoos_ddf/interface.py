@@ -1,4 +1,4 @@
-from typing import Any, Callable, Optional, TypeVar, Dict, List, Union, Literal
+from typing import Any, Callable, Optional, TypeVar, Dict, List, Union, Literal, Iterable, overload
 from enum import Enum
 from threading import Timer, Lock
 from dataclasses import dataclass, field
@@ -112,6 +112,7 @@ class _C4:
         Attributes:
             name: 歌单名
             songs: 歌曲列表
+            custom_data: 自定义数据
         """
         name: str = None
         songs: List['_C4.Song'] = field(default_factory=list)
@@ -386,6 +387,36 @@ class _C4:
         :return:
         """
 
+    def GetAllScenes(self) -> dict:
+        """
+        获取项目下所有场景信息
+        :param self:
+        :return:
+        """
+
+    def GetDeviceProperty(self, device_id: int, property_name: str) -> str | None:
+        """
+        获取设备属性
+        :param self:
+        :param device_id: 设备ID
+        :param property_name: 属性名称
+        :return:
+        """
+
+    def ShowConnection(self, id: int) -> None:
+        """
+        显示当前设备XML中对应的ID连接
+        :param self:
+        :param id: XML中连接对应的ID
+        """
+
+    def HideConnection(self, id: int) -> None:
+        """
+        隐藏当前设备XML中对应的ID连接
+        :param self:
+        :param id: XML中连接对应的ID
+        """
+
     # ---------------------- base64 ----------------------
 
     def Base64Decode(self, data: str) -> str:
@@ -570,6 +601,13 @@ class _C4:
     def get_room_audio_device(self, room_id) -> list | None:
         """获取房间音频连接设备的device_id"""
 
+    def set_room_volume(self, room_id: int, cmd: str, param: dict = None):
+        """通过房间音频音量和视频音量连接发送设置音量命令到对应的设备上
+        room_id: 房间ID
+        cmd: 音量控制命令，VOLUME_UP|VOLUME_DOWN|VOLUME_LEVEL，需要确保对应的设备具有此命令
+        param: 当命令为VOLUME_LEVEL时，传递具体音量值{'LEVEL':100}
+        """
+
     def get_states(self, proxy_id) -> dict | None:
         """获取指定设备的状态"""
 
@@ -578,6 +616,9 @@ class _C4:
 
     def get_scenes(self) -> list[dict[str, Any]]:
         """获取场景列表"""
+
+    def ExecuteScene(scene_id: int, command: str = 'EXECUTE'):
+        """执行场景，command为EXECUTE时，则为执行场景操作；command为TOGGLE时，反转场景，默认执行场景"""
 
     @deprecated('使用 C4.SendToDevice(...) 代替')
     def send_command(self, proxy_id, command, params=None):
@@ -619,8 +660,10 @@ class _C4:
         :return:
         """
 
-    def ExecuteScene(scene_id: int, command: str = 'EXECUTE'):
-        """执行场景，command为EXECUTE时，则为执行场景操作；command为TOGGLE时，反转场景，默认执行场景"""
+    def RegisterScheduler(self, scheduler_list: list[int]) -> None:
+        """
+        注册监听定时计划，若定时计划执行，则会通知对应注册的驱动，需要实现OnSchedulerRun
+        """
 
     # ---------------------- timer ----------------------
 
@@ -661,7 +704,7 @@ class _C4:
             function: 装饰器函数。
         """
 
-    def pub_class_catch(self: '_C4', cls, is_raise: bool = False, on_except: Callable[[Exception], None] | None = None):
+    def pub_class_catch[T](self: '_C4', cls: T, is_raise: bool = False, on_except: Callable[[Exception], None] | None = None) -> T:
         """装饰器，捕获类方法执行异常，并输出日志
 
         Args:
@@ -700,14 +743,15 @@ class _C4:
             diff_params (bool, optional): 是否对参数进行比较, 相同参数才会进行防抖. 默认为 False.
         """
 
+    @deprecated('框架内部自动调用，请勿手动调用')
     def pub_init(self: '_C4', PersistData: dict, **kwargs) -> None:
         """初始化公共函数库，并将持久化数据推送到前端（忽略以 _ 开头的属性）"""
 
     def pub_set_log_level(self: '_C4', level: int | str) -> None:
         """设置日志级别 0 无 10 调试 20 信息 30 警告 40 错误"""
 
-    def pub_log(self: '_C4', *args, level: int = 20, sep: str = ' ') -> None:
-        """打印日志"""
+    def pub_log(self: '_C4', *args, level: int | Iterable[int] = 20, sep: str = ' ') -> None:
+        """输出日志；若 level 整除 10，则输出 >= level 级别的日志，否则输出 == level 级别的日志"""
 
     def pub_get_PD(self: '_C4', key: str, default: Optional[T] = None) -> Optional[T]:
         """获取持久化数据"""
@@ -762,6 +806,7 @@ class _C4:
             args (tuple, optional): 位置参数. 默认为 ().
             kwargs (dict, optional): 关键字参数. 默认为 None.
             condition (Callable): 条件函数，返回 True 则停止重试.
+            msg (str, optional): 重试提示文本.
             max_retry (int, optional): 最大重试次数. 默认为 3 秒.
             timeout (float, optional): 超时时间. 默认为 3 秒.
             interval (float, optional): 条件检查间隔. 默认为 0.1 秒.
@@ -840,8 +885,25 @@ class _C4:
     def pub_with_default(self: '_C4', data: dict, default: dict) -> dict:
         """将 `data` 中的 `None` 值替换为 `default` 中的值"""
 
-    def pub_make_jsonrpc(self: '_C4', **kw) -> str:
-        """生成 jsonrpc 格式的请求数据，自动添加 id"""
+    @overload
+    def pub_make_jsonrpc(self: '_C4', *, dump: Literal[True] = True, **kw) -> str:
+        ...
+
+    @overload
+    def pub_make_jsonrpc(self: '_C4', *, dump: Literal[False] = False, **kw) -> dict:
+        ...
+
+    def pub_make_jsonrpc(self: '_C4', *, dump: bool = False, **kw) -> str | dict:
+        """生成 jsonrpc 格式的请求数据，自动递增 id
+
+        默认:
+        ```python
+            {
+                'jsonrpc': '2.0',
+                'id': xxx,
+            }
+        ```
+        """
 
     def pub_table_dumps(self: '_C4', table: list[dict[str, Any]]) -> str:
         """将字典列表转换为表格字符串"""
@@ -1048,12 +1110,18 @@ class _C4:
     def pub_WOL(self: '_C4', mac: str):
         """发送 WOL 包，实现网络唤醒"""
 
-    def pub_data_pipe(self: '_C4', data: bytes, size_len: int = 2) -> list[bytes]:
+    def pub_data_pipe(self: '_C4', data: bytes, len_size: int = 2, *, filter: Callable[[bytes], bool] | None = None) -> list[bytes]:
         """解析带长度前缀的数据，可以应对粘包拆包问题
 
         Args:
             data (bytes): 带长度前缀的数据
-            size_len (int, optional): 长度前缀的字节数. 默认为 2.
+            len_size (int, optional): 长度前缀的字节数. 默认为 2.
+            filter (Callable[[bytes], bool] | None, optional): 过滤函数。整包或拆包的第一个包返回 `True`；非拆包的第一个包返回 `False`，将放入 `buffer` 等待接收到足够长度的数据. 默认为 None.
+
+        Attrs:
+            buffer (bytes): 缓存数据
+            extract (Callable[[bytes, int], tuple[list[bytes], bytes]]): 提取数据包
+            clear (Callable[[], None]): 清空缓存
 
         Returns:
             list[bytes]: 解析后的包列表
@@ -1062,10 +1130,10 @@ class _C4:
     def pub_longdown_task(self: '_C4', send_to_proxy: Callable, cmd: str, params: dict, delay: float, interval: float = 0.5) -> None:
         """创建长按任务"""
 
-    def pub_mute_switch(self: '_C4', cmd: str) -> str | None:
+    def pub_mute_switch(self: '_C4', cmd: Literal['MUTE_ON', 'MUTE_OFF', 'MUTE_TOGGLE']) -> Literal['MUTE_ON', 'MUTE_OFF'] | None:
         """处理静音开关的情况"""
 
-    def pub_mute_toggle(self: '_C4', cmd: str) -> str | None:
+    def pub_mute_toggle(self: '_C4', cmd: Literal['MUTE_ON', 'MUTE_OFF', 'MUTE_TOGGLE']) -> Literal['MUTE_TOGGLE'] | None:
         """处理静音切换的情况"""
 
 
